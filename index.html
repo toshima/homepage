@@ -4,12 +4,11 @@
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Homepage of Takaki Oshima</title>
-      <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700" rel="stylesheet">
+      <link rel="preload" href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700" rel="stylesheet">
       <style>
             body {
                   margin: 0;
                   padding: 0;
-                  /* background-color: #fafafa; */
             }
             #container {
                   font-family: 'Source Code Pro', monospace;
@@ -28,7 +27,7 @@
             const dance = () => {
                   // Settings
                   const fontFamily = 'Source Code Pro';
-                  const fontSize = 15;
+                  const fontSize = 15; // TODO: hardcode charWidth = 9?
                   const lineHeight = 1.3;
                   const spacing = 0.01; // Spacing between text boxes
                   const marginTop = 0.04; // Margin at top of page
@@ -198,6 +197,7 @@
                         const context = canvas.getContext('2d');
                         context.font = `${fontSize}px "${fontFamily}"`;
                         const metrics = context.measureText('M');
+                        // console.log("metrics", metrics);
                         return metrics.width;
                   }
 
@@ -215,7 +215,7 @@
                                           formattedChar: {char: " ", link: null, bold: false},
                                           mass: sampleExponential(1),
                                           rowVelocity: sampleGaussian(),
-                                          columnVelocity: sampleGaussian(),
+                                          columnVelocity: 3 * sampleGaussian(),  // We want more horizontal movement than vertical.
                                           stopStep,
                                           row: r,
                                           column: c,
@@ -372,6 +372,14 @@
                   const charWidth = getMonospaceWidth(fontSize, fontFamily);
                   const numColumns = Math.floor(window.innerWidth / charWidth);
                   const minRows = Math.floor(window.innerHeight / fontSize / lineHeight);
+
+                  // console.log("window.innerWidth", window.innerWidth);
+                  // console.log("window.innerHeight", window.innerHeight);
+                  // console.log("fontSize", fontSize);
+                  // console.log("lineHeight", lineHeight);
+                  // console.log("charWidth", charWidth);
+                  // console.log("numColumns", numColumns);
+                  // console.log("minRows", minRows);
 
                   // Parse the website text and wrap it into lines.
                   const blocks = textBlocks.map(string => {
