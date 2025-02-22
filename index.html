@@ -2,23 +2,23 @@
 <html>
 <head>
       <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Homepage of Takaki Oshima</title>
+      <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700" rel="stylesheet">
       <style>
-            @font-face {
-                  font-family: 'Source Code Pro';
-                  src: url('/fonts/SourceCodePro-Regular.ttf') format('ttf');
-            }
             body {
                   margin: 0;
                   padding: 0;
-                  background-color: #f5f5f5;
+                  /* background-color: #fafafa; */
             }
             #container {
+                  font-family: 'Source Code Pro', monospace;
+                  color: #222222;
                   padding: 0;
                   min-height: 100vh;
                   overflow: hidden;
-                  color: #222222;
                   white-space: pre;
+                  letter-spacing: 0;
             }
       </style>
 </head>
@@ -26,20 +26,31 @@
       <div id="container"></div>
       <script>
             const dance = () => {
+                  // Settings
+                  const fontFamily = 'Source Code Pro';
+                  const fontSize = 15;
+                  const lineHeight = 1.3;
+                  const spacing = 0.01; // Spacing between text boxes
+                  const marginTop = 0.04; // Margin at top of page
+                  const marginBottom = 0.03; // Margin at bottom of page
+                  const marginSide = window.innerWidth < 1000 ? 0.1 : 0.2; // Margin on each side of page
+                  const numSteps = 200; // Number of steps in the simulation
+                  const interval_ms = 80; // Interval between steps in the simulation
+
+                  // The text to display.
                   const textBlocks = [
-                        "homepage of takaki oshima",
+                        "[b]homepage of takaki oshima[/b]",
                         `
-                              hi, i'm an independent researcher. my interest spans a bunch of domains including
-                               - ai
-                               - automated market making protocols
-                               - quantitative sports betting
-                               - creative coding
+                              this website is still a work-in-progress
                         `,
                         `
+                              hi, i'm an independent researcher. my interests spans a bunch of domains including
+                                - ai
+                                - automated market making protocols
+                                - quantitative sports betting
+                                - creative coding
+
                               i previously worked as a swe at [google](https://google.com/) and later as an hft trader.
-                        `,
-                        `
-                              "a journey of a thousand miles begins with a single step" - lao tzu
                         `,
                         `
                               the design of this website is heavily inspired by the discipline of creative coding and by artists like [andreas gysin](https://ertdfgcvb.xyz/) and by kim asendorf's [pixel sorting algorithm](https://github.com/kimasendorf/ASDFPixelSort).
@@ -52,64 +63,79 @@
                         `,
                         `
                               my favourite books, or books which have influenced me in some way, include
-                               - what i talk about when i talk about running by haruki murakami
-                               - folding beijing by hao jingfang
-                               - siddhartha by hermann hesse
-                               - the three body problem series by liu cixin
-                               - the almanack of naval ravikant by eric jorgenson
-                               - heaven by mieko kawakami
-                               - sapiens by yuval noah harari
+                                - what i talk about when i talk about running by haruki murakami
+                                - folding beijing by hao jingfang
+                                - siddhartha by hermann hesse
+                                - the three body problem series by liu cixin
+                                - the almanack of naval ravikant by eric jorgenson
+                                - heaven by mieko kawakami
+                                - sapiens by yuval noah harari
                         `,
                         `
                               i drink a lot of tea. my favourites are
-                               - peppermint
-                               - ali shan
+                                - peppermint
+                                - ali shan
                         `,
                         `
                               ai seems to be getting really good really quickly. my basic framework is to
-                               1. use ai for the things it can do
-                               2. use my time doing things it can't do yet
+                                1. use ai for the things it can do (eg tools like cursor)
+                                2. use my time doing things it can't do yet (eg building a business)
+                        `,
                         `
+                              "a journey of a thousand miles begins with a single step"  - lao tzu
+                        `,
+                        `
+                              you can find me on [github](https://github.com/toshima/) and (less actively) on [twitter](https://x.com/takakioshima) and [linkedin](https://www.linkedin.com/in/takakioshima/).
+                        `,
+                        `
+                              this site was written in pure javascript. best viewed on a large display. it uses my favourite coding font, [source code pro](https://adobe-fonts.github.io/source-code-pro/).
+                        `,
                   ];
 
                   // Remove leading whitespace from each line.
                   function dedent(text) {
-                        const lines = text.split('\n').filter(line => line.trim());
-                        const indentLength = Math.min(...lines.map(line => line.match(/^ */)[0].length));
+                        const lines = text.split('\n');
+                        const indentLength = Math.min(...lines.filter(line => line.trim()).map(line => line.match(/^ */)[0].length));
                         return lines.map(line => line.slice(indentLength)).join('\n');
                   }
 
-                  // Take in a string and return an array of formatted characters.
+                  // Take in a string and return an array of characters together with their formatting.
+                  // For example, "[b]h[/b]i" -> [{char: "h", link: null, bold: true}, {char: "i", link: null, bold: false}]
                   function parseFormattedCharacters(input) {
                         const result = [];
                         let i = 0;
                         while (i < input.length) {
                               if (input[i] === '[') {
+                                    if (input.slice(i, i + 3) === '[b]') {
+                                          const j = input.indexOf('[/b]', i + 3);
+                                          if (j !== -1) {
+                                                const boldText = input.slice(i + 3, j);
+                                                for (const char of boldText) {
+                                                      result.push({char, link: null, bold: true});
+                                                }
+                                                i = j + 4; // Skip past "[/b]"
+                                                continue;
+                                          }
+                                    }
                                     const j = input.indexOf(']', i + 1);
                                     const k = input.indexOf(')', i + 1);
                                     if (j !== -1 && k !== -1 && input[j+1] === "(") {
                                           const linkText = input.slice(i + 1, j);
                                           const linkUrl = input.slice(j + 2, k);
                                           for (const char of linkText) {
-                                                result.push({
-                                                      char,
-                                                      link: linkUrl,
-                                                });
+                                                result.push({char, link: linkUrl, bold: false});
                                           }
-                                          i = k + 1;
+                                          i = k + 1; // Skip past ")"
                                           continue;
                                     }
                               }
-                              result.push({
-                                    char: input[i],
-                                    link: null,
-                              });
+                              result.push({char: input[i], link: null, bold: false});
                               i++;
                         }
                         return result;
                   }
 
-                  // Take in an array of formatted characters and return an array of lines.
+                  // Take in an array of formatted characters and return an array of lines, splitting when the text is too long.
                   const wrapText = (formattedChars, width) => {
                         const lines = [];
                         let line = [];
@@ -142,23 +168,26 @@
                         return lines;
                   };
 
-                  const packRectangles = (rectangles, numColumns, spacing, marginTop, marginSide) => {
+                  const updateTextBlockPositions = (rectangles, numColumns, spacing, marginTop, marginSide) => {
+                        // Calculate the spacing and margins in terms of the number of columns.
+                        const sp = Math.max(2, Math.floor(spacing * numColumns));
+                        const ms = Math.max(1, Math.floor(marginSide * numColumns));
+                        const mt = Math.max(1, Math.floor(marginTop * numColumns));
+
                         for (const [i, rectangle] of rectangles.entries()) {
                               const {width, height} = rectangle;
-                              let row = marginTop;
-                              while (true) {
-                                    const column = sampleUniformInt(marginSide, numColumns - width - marginSide);
-                                    if (!rectangles.slice(0,i).some(r => 
-                                          column < r.column + r.width + spacing && 
-                                          column + width > r.column - spacing &&
-                                          row < r.row + r.height + spacing && 
-                                          row + height > r.row - spacing
+                              for (let row = mt; row < mt + 10_000; row += 1) {
+                                    const column = sampleUniformInt(ms, numColumns - width - ms);
+                                    if (!rectangles.slice(0, i).some(r => 
+                                          column < r.column + r.width + sp && 
+                                          column + width > r.column - sp &&
+                                          row < r.row + r.height + sp && 
+                                          row + height > r.row - sp
                                     )) {
                                           rectangle.row = row;
                                           rectangle.column = column;
                                           break;
                                     }
-                                    row += 1;
                               }
                         }
                   }
@@ -167,8 +196,8 @@
                   const getMonospaceWidth = (fontSize, fontFamily) => {
                         const canvas = document.createElement('canvas');
                         const context = canvas.getContext('2d');
-                        context.font = `${fontSize}px ${fontFamily}`;
-                        const metrics = context.measureText('X');
+                        context.font = `${fontSize}px "${fontFamily}"`;
+                        const metrics = context.measureText('M');
                         return metrics.width;
                   }
 
@@ -176,84 +205,125 @@
                         const cells = [];
                         for (let r = 0; r < numRows; r++) {
                               for (let c = 0; c < numColumns; c++) {
+                                    // `stopStep` is the step at which the character will no longer move.
+                                    // We set it so that the characters are finalized in a sweeping motion from top-left to bottom-right.
+                                    const progress = (r + c) / (numRows + numColumns);
+                                    const stopStep = Math.floor(progress * numSteps);
                                     cells.push({
-                                          startRow: r,
-                                          startColumn: c,
-                                          row: r,
-                                          column: c,
-                                          char: " ",
-                                          link: null,
-                                          color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
-                                          bgColor: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+                                          initialRow: r,
+                                          initialColumn: c,
+                                          formattedChar: {char: " ", link: null, bold: false},
                                           mass: sampleExponential(1),
                                           rowVelocity: sampleGaussian(),
                                           columnVelocity: sampleGaussian(),
-                                          freezeStep: sampleUniformInt(50, 100),
+                                          stopStep,
+                                          row: r,
+                                          column: c,
                                     });
                               }
                         }
                         return cells;
                   }
 
+                  const simulateAndPopulateCellChars = (cells, numRows, numColumns) => {
+                        // Create a copy of the cells so we don't actually move the original cells
+                        const simulationState = {
+                              cells: cells.map(cell => ({...cell})),
+                              numRows,
+                              numColumns,
+                              step: 0,
+                        }
+
+                        // Simulate all the steps without displaying anything.
+                        for (let i = 0; i < numSteps; i++) {
+                              evolve(simulationState);
+                              simulationState.step += 1;
+                        }
+
+                        // Create mapping to speed things up
+                        const simulatedCellMap = createCellMap(simulationState.cells);
+                        const cellMap = createCellMap(cells);
+
+                        // Populate the cells with the characters from the simulation
+                        for (const block of blocks) {
+                              for (const [r, line] of block.lines.entries()) {
+                                    // Random shift to avoid the left side of the text exactly lining up.
+                                    const offset = sampleUniformInt(0, 1);
+                                    for (const [c, formattedChar] of line.entries()) {
+                                          // Find the cell that ended up in this position in the simulation.
+                                          const simCell = simulatedCellMap[`${block.row + r},${block.column + c + offset}`];
+                                          if (simCell) {
+                                                // Update the cell in the simulated cell's initial position.
+                                                const cell = cellMap[`${simCell.initialRow},${simCell.initialColumn}`];
+                                                cell.formattedChar = formattedChar;
+                                          }
+                                    }
+                              }
+                        }
+                  }
+
                   // Update the container with multiple lines of random text.
                   const update = (state) => {
                         evolve(state);
-                        render(state);
+                        display(state);
                         state.step += 1;
-                        if (state.step >= 100) {
+                        if (state.step >= numSteps) {
                               clearInterval(intervalId);
                               return;
                         }
                   }
 
-                  const render = ({cells}) => {
+                  // Update the webpage with the current state of the simulation.
+                  const display = ({cells, step}) => {
                         let lines = [];
                         for (let r = 0; r < numRows; r++) {
                               const rowCells = cells.filter(cell => cell.row === r).sort((a, b) => a.column - b.column);
-                              lines.push(rowCells.map(({char, link}) => {
-                                    if (link) {
-                                          return `<a href="${link}">${char}</a>`;
-                                    } else {
-                                          return char;
+                              lines.push(rowCells.map(({formattedChar: {char, link, bold}, stopStep}) => {
+                                    let result = char;
+                                    if (bold) {
+                                          result = `<strong>${char}</strong>`;
                                     }
+
+                                    // Only show links after it's in its final position.
+                                    if (link && step >= stopStep) {
+                                          result = `<a href="${link}" style="color: inherit; text-decoration: underline;">${result}</a>`;
+                                    }
+                                    return result;
                               }).join(''));
-                              // lines.push(rowCells.map(cell => cell.char).join(''));
-                              // lines.push(rowCells.map(cell => `<span style="color: ${cell.color}; background-color: ${cell.bgColor};">${cell.char}</span>`).join(''));
-                              // lines.push(rowCells.map(cell => `<span style="color: ${cell.color};">${cell.char}</span>`).join(''));
-                              // lines.push(rowCells.map(cell => `<a href="https://google.com/">${cell.char}</a>`).join(''));
                         }
                         const container = document.getElementById('container');
-                        // container.textContent = lines.join('\n');
                         container.innerHTML = lines.join('\n');
                   }
 
+                  // Update the simulation state by one step.
                   const evolve = (state) => {
                         const {cells, numRows, numColumns, step} = state;
                         const cellMap = createCellMap(cells);
 
+                        // We look at tilings of 2x2 squares of cells, alternating between starting at (0, 0) and (1, 1).
                         for (let r = step % 2; r < numRows-1; r += 2) {
                               for (let c = step % 2; c < numColumns-1; c += 2) {
                                     const group = [
-                                          cellMap[`${r % numRows},${c % numColumns}`],
-                                          cellMap[`${r % numRows},${(c + 1) % numColumns}`],
-                                          cellMap[`${(r + 1) % numRows},${(c + 1) % numColumns}`],
-                                          cellMap[`${(r + 1) % numRows},${c % numColumns}`],
+                                          cellMap[`${r},${c}`],
+                                          cellMap[`${r},${(c + 1)}`],
+                                          cellMap[`${(r + 1)},${(c + 1)}`],
+                                          cellMap[`${(r + 1)},${c}`],
                                     ];
-                                    if (group.some(({freezeStep}) => step >= freezeStep)) {
+                                    if (group.some(({stopStep}) => step >= stopStep)) {
                                           continue;
                                     }
 
-                                    const clockwise = calculateAngularMomentum(group) > 0;
+                                    const clockwise = calculateAngularMomentum(group) < 0;
                                     if (clockwise) {
-                                          updateCell(state, group[0], 1, 0);
-                                          updateCell(state, group[1], 0, -1);
-                                          updateCell(state, group[2], -1, 0);
-                                          updateCell(state, group[3], 0, 1);
+                                          group[0].row += 1;
+                                          group[1].column -= 1;
+                                          group[2].row -= 1;
+                                          group[3].column += 1;
                                     } else {
-                                          updateCell(state, group[0], 0, 1);
-                                          updateCell(state, group[1], 1, 0);
-                                          updateCell(state, group[2], 0, -1);
-                                          updateCell(state, group[3], -1, 0);
+                                          group[0].column += 1;
+                                          group[1].row += 1;
+                                          group[2].column -= 1;
+                                          group[3].row -= 1;
                                     }
                               }
                         }
@@ -266,37 +336,12 @@
                         for (const cell of group) {
                               const dr = cell.row - centerRow;
                               const dc = cell.column - centerColumn;
-                              angularMomentum += cell.mass * (dc * cell.columnVelocity - dr * cell.rowVelocity);
+                              angularMomentum += cell.mass * (dr * cell.columnVelocity - dc * cell.rowVelocity);
                         }
                         return angularMomentum;
                   }
 
-                  const updateCell = (state, cell, rowDelta, columnDelta) => {
-                        const {numRows, numColumns} = state;
-                        cell.row = (cell.row + numRows + rowDelta) % numRows;
-                        cell.column = (cell.column + numColumns + columnDelta) % numColumns;
-                  }
-
-                  // Sample a random float between min and max.
-                  const sampleUniform = (min, max) => {
-                        return min + Math.random() * (max - min);
-                  }
-
-                  // Sample a random integer between min and max inclusive.
-                  const sampleUniformInt = (min, max) => {
-                        return Math.floor(sampleUniform(min, max + 1));
-                  }
-
-                  const sampleGaussian = () => {
-                        const r = Math.sqrt(sampleExponential(2));
-                        const theta = 2 * Math.PI * Math.random();
-                        return r * Math.cos(theta);
-                  }
-
-                  const sampleExponential = (lambda) => {
-                        return -Math.log(Math.random()) / lambda;
-                  }
-
+                  // Create a map to look up cells by their row and column.
                   const createCellMap = (cells) => {
                         const cellMap = {};
                         cells.forEach(cell => {
@@ -305,31 +350,33 @@
                         return cellMap;
                   }
 
-                  // Globals
-                  const fontSize = 14;
-                  const fontFamily = 'Source Code Pro';
+                  const sampleUniform = (min, max) => {
+                        return min + Math.random() * (max - min);
+                  }
+
+                  const sampleUniformInt = (min, max) => {
+                        return Math.floor(sampleUniform(min, max + 1));
+                  }
+
+                  const sampleExponential = (lambda) => {
+                        return -Math.log(Math.random()) / lambda;
+                  }
+
+                  const sampleGaussian = () => {
+                        const r = Math.sqrt(sampleExponential(2));
+                        const theta = 2 * Math.PI * Math.random();
+                        return r * Math.cos(theta);
+                  }
+
+                  // Calculate number of columns and min rows based on window size.
                   const charWidth = getMonospaceWidth(fontSize, fontFamily);
-                  const numColumns = Math.floor(window.innerWidth / charWidth) - 10;
-                  const numRows = 100;
-                  const cells = generateCells(numRows, numColumns);
-                  const spacing = 5;
-                  const marginTop = 5;
-                  const marginSide = 5;
+                  const numColumns = Math.floor(window.innerWidth / charWidth);
+                  const minRows = Math.floor(window.innerHeight / fontSize / lineHeight);
 
-                  const simulationState = {
-                        cells: cells.map(cell => ({...cell})),
-                        numRows,
-                        numColumns,
-                        step: 0,
-                  }
-                  for (let i = 0; i < 100; i++) {
-                        evolve(simulationState);
-                        simulationState.step += 1;
-                  }
-
+                  // Parse the website text and wrap it into lines.
                   const blocks = textBlocks.map(string => {
                         const text = parseFormattedCharacters(dedent(string));
-                        const width = sampleUniformInt(20, 60);
+                        const width = Math.min(sampleUniformInt(20, 60), numColumns * (1 - 2 * marginSide));
                         const lines = wrapText(text, width);
                         return {
                               lines,
@@ -337,46 +384,37 @@
                               height: lines.length,
                         }
                   });
-                  packRectangles(blocks, numColumns, spacing, marginTop, marginSide);
+                  updateTextBlockPositions(blocks, numColumns, spacing, marginTop, marginSide);
 
-                  const simulatedCellMap = createCellMap(simulationState.cells);
-                  const cellMap = createCellMap(cells);
-                  for (const block of blocks) {
-                        for (const [r, line] of block.lines.entries()) {
-                              for (const [c, formattedChar] of line.entries()) {
-                                    const simCell = simulatedCellMap[`${block.row + r},${block.column + c}`];
-                                    if (simCell) {
-                                          const cell = cellMap[`${simCell.startRow},${simCell.startColumn}`];
-                                          cell["char"] = formattedChar.char;
-                                          cell["link"] = formattedChar.link;
-                                    }
-                              }
-                        }
-                  }
-                  console.log("Finished simulating cells");
+                  // Calculate the number of rows based on the block positions
+                  const numRows = Math.max(minRows, Math.max(...blocks.map(block => block.row + block.height)) + Math.floor(marginBottom * numColumns));
 
-                  // for (let r = 50; r < 100; r++) {
-                  //       for (let c = 50; c < 100; c++) {
-                  //             const sc = simulatedCellMap[`${r},${c}`];
-                  //             if (sc) {
-                  //                   const cell = cellMap[`${sc.startRow},${sc.startColumn}`];
-                  //                   cell.char = "X";
-                  //             }
-                  //       }
-                  // }
+                  // Generate the cells and simulate the movement of the characters.
+                  const cells = generateCells(numRows, numColumns);
+                  simulateAndPopulateCellChars(cells, numRows, numColumns);
 
-                  // Set font size and family
+                  // Set styles for the container.
                   const container = document.getElementById('container');
                   container.style.fontSize = `${fontSize}px`;
                   container.style.fontFamily = fontFamily;
+                  container.style.lineHeight = `${lineHeight}`;
 
+                  // Sample and set a random background color.
+                  const r = sampleUniformInt(245, 255);
+                  const g = sampleUniformInt(245, 255);
+                  const b = sampleUniformInt(245, 250);
+                  const body = document.body;
+                  body.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+
+                  // Run and display the simulation
                   const state = {cells, numRows, numColumns, step: 0};
-                  render(state);
-                  const intervalId = setInterval(() => update(state), 100);
+                  display(state);
+                  const intervalId = setInterval(() => update(state), interval_ms);
             }
 
-            dance();
+            document.fonts.ready.then(() => {
+                  dance();
+            });
       </script>
 </body>
 </html>
-
