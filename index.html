@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+<head>
+      <meta charset="UTF-8">
+      <title>Homepage of Takaki Oshima</title>
+      <style>
+            @font-face {
+                  font-family: 'Source Code Pro';
+                  src: url('/fonts/SourceCodePro-Regular.ttf') format('ttf');
+            }
+            body {
+                  margin: 0;
+                  padding: 0;
+                  background-color: #f5f5f5;
+            }
+            #container {
+                  padding: 0;
+                  min-height: 100vh;
+                  overflow: hidden;
+                  color: #222222;
+                  white-space: pre;
+            }
+      </style>
+</head>
+<body>
+      <div id="container"></div>
+      <script>
+            const dance = () => {
+                  const textBlocks = [
+                        "homepage of takaki oshima",
+                        `
+                              hi, i'm an independent researcher. my interest spans a bunch of domains including
+                               - ai
+                               - automated market making protocols
+                               - quantitative sports betting
+                               - creative coding
+                        `,
+                        `
+                              i previously worked as a swe at [google](https://google.com/) and later as an hft trader.
+                        `,
+                        `
+                              "a journey of a thousand miles begins with a single step" - lao tzu
+                        `,
+                        `
+                              the design of this website is heavily inspired by the discipline of creative coding and by artists like [andreas gysin](https://ertdfgcvb.xyz/) and by kim asendorf's [pixel sorting algorithm](https://github.com/kimasendorf/ASDFPixelSort).
+                        `,
+                        `
+                              the algorithm for this website works by giving each character (including blank spaces) a random velocity and mass. then each 2x2 square is rotated clockwise or counterclockwise depending on the angular momentum of the 4 characters. to get the characters to end up in their final positions, a simulation is first played out and the target text is written out, then the characters are reset back to their original positions and the algorithm is run again for real.
+                        `,
+                        `
+                              if you refresh the page and rerun the algorithm, it'll be different every time. stuff like the starting positions of the characters are all randomized.
+                        `,
+                        `
+                              my favourite books, or books which have influenced me in some way, include
+                               - what i talk about when i talk about running by haruki murakami
+                               - folding beijing by hao jingfang
+                               - siddhartha by hermann hesse
+                               - the three body problem series by liu cixin
+                               - the almanack of naval ravikant by eric jorgenson
+                               - heaven by mieko kawakami
+                               - sapiens by yuval noah harari
+                        `,
+                        `
+                              i drink a lot of tea. my favourites are
+                               - peppermint
+                               - ali shan
+                        `,
+                        `
+                              ai seems to be getting really good really quickly. my basic framework is to
+                               1. use ai for the things it can do
+                               2. use my time doing things it can't do yet
+                        `
+                  ];
+
+                  // Remove leading whitespace from each line.
+                  function dedent(text) {
+                        const lines = text.split('\n').filter(line => line.trim());
+                        const indentLength = Math.min(...lines.map(line => line.match(/^ */)[0].length));
+                        return lines.map(line => line.slice(indentLength)).join('\n');
+                  }
+
+                  // Take in a string and return an array of formatted characters.
+                  function parseFormattedCharacters(input) {
+                        const result = [];
+                        let i = 0;
+                        while (i < input.length) {
+                              if (input[i] === '[') {
+                                    const j = input.indexOf(']', i + 1);
+                                    const k = input.indexOf(')', i + 1);
+                                    if (j !== -1 && k !== -1 && input[j+1] === "(") {
+                                          const linkText = input.slice(i + 1, j);
+                                          const linkUrl = input.slice(j + 2, k);
+                                          for (const char of linkText) {
+                                                result.push({
+                                                      char,
+                                                      link: linkUrl,
+                                                });
+                                          }
+                                          i = k + 1;
+                                          continue;
+                                    }
+                              }
+                              result.push({
+                                    char: input[i],
+                                    link: null,
+                              });
+                              i++;
+                        }
+                        return result;
+                  }
+
+                  // Take in an array of formatted characters and return an array of lines.
+                  const wrapText = (formattedChars, width) => {
+                        const lines = [];
+                        let line = [];
+                        let lastSpaceIdx = -1;
+                        for (const fc of formattedChars) {
+                              if (fc.char === '\n') {
+                                    lines.push(line);
+                                    line = [];
+                                    lastSpaceIdx = -1;
+                                    continue;
+                              }
+                              line.push(fc);
+                              if (fc.char === ' ') {
+                                    lastSpaceIdx = line.length - 1;
+                              }
+                              if (line.length >= width) {
+                                    if (lastSpaceIdx >= 0) {
+                                          lines.push(line.slice(0, lastSpaceIdx));
+                                          line = line.slice(lastSpaceIdx + 1);
+                                    } else {
+                                          lines.push(line);
+                                          line = [];
+                                          lastSpaceIdx = -1;
+                                    }
+                              }
+                        }
+                        if (line.length) {
+                              lines.push(line);
+                        }
+                        return lines;
+                  };
+
+                  const packRectangles = (rectangles, numColumns, spacing, marginTop, marginSide) => {
+                        for (const [i, rectangle] of rectangles.entries()) {
+                              const {width, height} = rectangle;
+                              let row = marginTop;
+                              while (true) {
+                                    const column = sampleUniformInt(marginSide, numColumns - width - marginSide);
+                                    if (!rectangles.slice(0,i).some(r => 
+                                          column < r.column + r.width + spacing && 
+                                          column + width > r.column - spacing &&
+                                          row < r.row + r.height + spacing && 
+                                          row + height > r.row - spacing
+                                    )) {
+                                          rectangle.row = row;
+                                          rectangle.column = column;
+                                          break;
+                                    }
+                                    row += 1;
+                              }
+                        }
+                  }
+
+                  // Get the width of a monospace character in pixels.
+                  const getMonospaceWidth = (fontSize, fontFamily) => {
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d');
+                        context.font = `${fontSize}px ${fontFamily}`;
+                        const metrics = context.measureText('X');
+                        return metrics.width;
+                  }
+
+                  const generateCells = (numRows, numColumns) => {
+                        const cells = [];
+                        for (let r = 0; r < numRows; r++) {
+                              for (let c = 0; c < numColumns; c++) {
+                                    cells.push({
+                                          startRow: r,
+                                          startColumn: c,
+                                          row: r,
+                                          column: c,
+                                          char: " ",
+                                          link: null,
+                                          color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+                                          bgColor: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+                                          mass: sampleExponential(1),
+                                          rowVelocity: sampleGaussian(),
+                                          columnVelocity: sampleGaussian(),
+                                          freezeStep: sampleUniformInt(50, 100),
+                                    });
+                              }
+                        }
+                        return cells;
+                  }
+
+                  // Update the container with multiple lines of random text.
+                  const update = (state) => {
+                        evolve(state);
+                        render(state);
+                        state.step += 1;
+                        if (state.step >= 100) {
+                              clearInterval(intervalId);
+                              return;
+                        }
+                  }
+
+                  const render = ({cells}) => {
+                        let lines = [];
+                        for (let r = 0; r < numRows; r++) {
+                              const rowCells = cells.filter(cell => cell.row === r).sort((a, b) => a.column - b.column);
+                              lines.push(rowCells.map(({char, link}) => {
+                                    if (link) {
+                                          return `<a href="${link}">${char}</a>`;
+                                    } else {
+                                          return char;
+                                    }
+                              }).join(''));
+                              // lines.push(rowCells.map(cell => cell.char).join(''));
+                              // lines.push(rowCells.map(cell => `<span style="color: ${cell.color}; background-color: ${cell.bgColor};">${cell.char}</span>`).join(''));
+                              // lines.push(rowCells.map(cell => `<span style="color: ${cell.color};">${cell.char}</span>`).join(''));
+                              // lines.push(rowCells.map(cell => `<a href="https://google.com/">${cell.char}</a>`).join(''));
+                        }
+                        const container = document.getElementById('container');
+                        // container.textContent = lines.join('\n');
+                        container.innerHTML = lines.join('\n');
+                  }
+
+                  const evolve = (state) => {
+                        const {cells, numRows, numColumns, step} = state;
+                        const cellMap = createCellMap(cells);
+
+                        for (let r = step % 2; r < numRows-1; r += 2) {
+                              for (let c = step % 2; c < numColumns-1; c += 2) {
+                                    const group = [
+                                          cellMap[`${r % numRows},${c % numColumns}`],
+                                          cellMap[`${r % numRows},${(c + 1) % numColumns}`],
+                                          cellMap[`${(r + 1) % numRows},${(c + 1) % numColumns}`],
+                                          cellMap[`${(r + 1) % numRows},${c % numColumns}`],
+                                    ];
+                                    if (group.some(({freezeStep}) => step >= freezeStep)) {
+                                          continue;
+                                    }
+
+                                    const clockwise = calculateAngularMomentum(group) > 0;
+                                    if (clockwise) {
+                                          updateCell(state, group[0], 1, 0);
+                                          updateCell(state, group[1], 0, -1);
+                                          updateCell(state, group[2], -1, 0);
+                                          updateCell(state, group[3], 0, 1);
+                                    } else {
+                                          updateCell(state, group[0], 0, 1);
+                                          updateCell(state, group[1], 1, 0);
+                                          updateCell(state, group[2], 0, -1);
+                                          updateCell(state, group[3], -1, 0);
+                                    }
+                              }
+                        }
+                  }
+
+                  const calculateAngularMomentum = (group) => {
+                        const centerRow = group.reduce((sum, cell) => sum + cell.row, 0) / group.length;
+                        const centerColumn = group.reduce((sum, cell) => sum + cell.column, 0) / group.length;
+                        let angularMomentum = 0;
+                        for (const cell of group) {
+                              const dr = cell.row - centerRow;
+                              const dc = cell.column - centerColumn;
+                              angularMomentum += cell.mass * (dc * cell.columnVelocity - dr * cell.rowVelocity);
+                        }
+                        return angularMomentum;
+                  }
+
+                  const updateCell = (state, cell, rowDelta, columnDelta) => {
+                        const {numRows, numColumns} = state;
+                        cell.row = (cell.row + numRows + rowDelta) % numRows;
+                        cell.column = (cell.column + numColumns + columnDelta) % numColumns;
+                  }
+
+                  // Sample a random float between min and max.
+                  const sampleUniform = (min, max) => {
+                        return min + Math.random() * (max - min);
+                  }
+
+                  // Sample a random integer between min and max inclusive.
+                  const sampleUniformInt = (min, max) => {
+                        return Math.floor(sampleUniform(min, max + 1));
+                  }
+
+                  const sampleGaussian = () => {
+                        const r = Math.sqrt(sampleExponential(2));
+                        const theta = 2 * Math.PI * Math.random();
+                        return r * Math.cos(theta);
+                  }
+
+                  const sampleExponential = (lambda) => {
+                        return -Math.log(Math.random()) / lambda;
+                  }
+
+                  const createCellMap = (cells) => {
+                        const cellMap = {};
+                        cells.forEach(cell => {
+                              cellMap[`${cell.row},${cell.column}`] = cell;
+                        });
+                        return cellMap;
+                  }
+
+                  // Globals
+                  const fontSize = 14;
+                  const fontFamily = 'Source Code Pro';
+                  const charWidth = getMonospaceWidth(fontSize, fontFamily);
+                  const numColumns = Math.floor(window.innerWidth / charWidth) - 10;
+                  const numRows = 100;
+                  const cells = generateCells(numRows, numColumns);
+                  const spacing = 5;
+                  const marginTop = 5;
+                  const marginSide = 5;
+
+                  const simulationState = {
+                        cells: cells.map(cell => ({...cell})),
+                        numRows,
+                        numColumns,
+                        step: 0,
+                  }
+                  for (let i = 0; i < 100; i++) {
+                        evolve(simulationState);
+                        simulationState.step += 1;
+                  }
+
+                  const blocks = textBlocks.map(string => {
+                        const text = parseFormattedCharacters(dedent(string));
+                        const width = sampleUniformInt(20, 60);
+                        const lines = wrapText(text, width);
+                        return {
+                              lines,
+                              width,
+                              height: lines.length,
+                        }
+                  });
+                  packRectangles(blocks, numColumns, spacing, marginTop, marginSide);
+
+                  const simulatedCellMap = createCellMap(simulationState.cells);
+                  const cellMap = createCellMap(cells);
+                  for (const block of blocks) {
+                        for (const [r, line] of block.lines.entries()) {
+                              for (const [c, formattedChar] of line.entries()) {
+                                    const simCell = simulatedCellMap[`${block.row + r},${block.column + c}`];
+                                    if (simCell) {
+                                          const cell = cellMap[`${simCell.startRow},${simCell.startColumn}`];
+                                          cell["char"] = formattedChar.char;
+                                          cell["link"] = formattedChar.link;
+                                    }
+                              }
+                        }
+                  }
+                  console.log("Finished simulating cells");
+
+                  // for (let r = 50; r < 100; r++) {
+                  //       for (let c = 50; c < 100; c++) {
+                  //             const sc = simulatedCellMap[`${r},${c}`];
+                  //             if (sc) {
+                  //                   const cell = cellMap[`${sc.startRow},${sc.startColumn}`];
+                  //                   cell.char = "X";
+                  //             }
+                  //       }
+                  // }
+
+                  // Set font size and family
+                  const container = document.getElementById('container');
+                  container.style.fontSize = `${fontSize}px`;
+                  container.style.fontFamily = fontFamily;
+
+                  const state = {cells, numRows, numColumns, step: 0};
+                  render(state);
+                  const intervalId = setInterval(() => update(state), 100);
+            }
+
+            dance();
+      </script>
+</body>
+</html>
+
