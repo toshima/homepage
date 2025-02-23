@@ -110,7 +110,7 @@
                               ~~~~~~~~~~~
                               the source code for this website can be found on [github](https://github.com/toshima/homepage).
 
-                              it's contained in a single ~500 line html file and it should be pretty readable. but i'm not a js main so it's not really written in an idiomatic way.
+                              it's written purely in javascript without any dependencies and is contained in a single ~500 line file. the code should be reasonably readable, however i'm not a js main so it wouldn't be written in a particularly idiomatic way.
                         `,
                         `
                               ai seems to be getting really good really quickly. my framework rn is to:
@@ -303,20 +303,23 @@
                   // Update the container with multiple lines of random text
                   const update = (state) => {
                         evolve(state);
+                        updateCatFace();
                         display(state);
                         state.step += 1;
 
-                        // Change the cat face at random intervals
-                        if (Math.random() < 0.5 && state.step % 50 === 0) {
-                              currentCatFace = CAT_FACES[Math.floor(Math.random() * CAT_FACES.length)];
-                        }
-
                         // We keep running after NUM_STEPS has elapsed so the cat face can keep changing
-                        // But after 10 * NUM_STEPS, we stop running
-                        if (state.step >= 10 * NUM_STEPS) {
-                              clearInterval(intervalId);
-                              return;
-                        }
+                        // if (state.step >= NUM_STEPS) {
+                        //       clearInterval(intervalId);
+                        //       return;
+                        // }
+                  }
+
+                  const updateCatFace = () => {
+                        // Use pseudo-random cat face based on the current epoch so that the cat face
+                        // is the same for everyone who's currently viewing it.
+                        epoch = Math.floor(Date.now() / 1_000);
+                        const r = ((epoch * 9301 + 49297) % 233280) / 233280;
+                        currentCatFace = CAT_FACES[Math.floor(r * CAT_FACES.length)];
                   }
 
                   // Update the webpage with the current state of the simulation
