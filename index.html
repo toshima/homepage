@@ -90,13 +90,18 @@
                         `
                               about this website
                               ~~~~~~~~~~~~~~~~~~
-                              the logic behind the flying/dancing characters is pretty simple. each character has a random velocity and mass and i take 2x2 groups of characters and rotate them clockwise or counterclockwise depending on their combined angular momentum. so each frame, every character moves exactly one step - characters aren't allowed to teleport or stay still (until they reach their final position).
+                              i'd been meaning to make a personal website for a while but never got round to it because i didn't really have a need for one. i still don't have a need for one but i did have an idea (text dancing around then settling into place) and also had an itch to create something, so i made this in february 2025.
 
                               if you refresh the page, it'll be different every time. the characters and the layout of the text are randomly generated on the fly.
 
                               this site is best viewed on a large display. it uses my favourite coding font, [source code pro](https://adobe-fonts.github.io/source-code-pro/).
 
                               it takes inspiration from the work of generative artists like [andreas gysin](https://ertdfgcvb.xyz/) and more generally from the field of creative coding such as [kim asendorf](https://kimasendorf.com/)'s [pixel sorting algorithm](https://github.com/kimasendorf/ASDFPixelSort).
+                        `,
+                        `
+                              how it was made
+                              ~~~~~~~~~~~~~~~
+                              the logic behind the dancing text is pretty simple. each character has a random velocity and mass and i take 2x2 groups of characters and rotate them clockwise or counterclockwise depending on their combined angular momentum. so each frame, every character moves exactly one step - characters aren't allowed to teleport or stay still (until they reach their final position).
                         `,
                         `
                               source code
@@ -239,10 +244,6 @@
                         const cells = [];
                         for (let r = 0; r < numRows; r++) {
                               for (let c = 0; c < numColumns; c++) {
-                                    // `stopStep` is the step at which the character will no longer move.
-                                    // We set it so that the characters are finalized in a sweeping motion from top-left to bottom-right.
-                                    const progress = (r + c) / (numRows + numColumns);
-                                    const stopStep = Math.floor(progress * NUM_STEPS);
                                     cells.push({
                                           initialRow: r,
                                           initialColumn: c,
@@ -250,7 +251,7 @@
                                           mass: sampleExponential(1),
                                           rowVelocity: sampleGaussian(),
                                           columnVelocity: 3 * sampleGaussian(),  // We want more horizontal movement than vertical
-                                          stopStep,
+                                          stopStep: sampleUniformInt(0.9 * NUM_STEPS, NUM_STEPS),
                                           row: r,
                                           column: c,
                                     });
