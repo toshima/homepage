@@ -43,26 +43,26 @@
                   const MARGIN_TOP = 0.03; // Margin at top of page
                   const MARGIN_BOTTOM = 0.02; // Margin at bottom of page
                   const MARGIN_SIDE = 0.1; // Margin on each side of page
-                  const NUM_STEPS = 200; // Number of steps in the simulation
-                  const INTERVAL_MS = 60; // Interval between steps in the simulation
+                  const NUM_STEPS = 200; // Number of steps in the animation. Determines how long the animation lasts.
+                  const INTERVAL_MS = 60; // Interval between steps in the animation. Determines how fast the characters move.
 
-                  const CAT_TOKENS = ["⚈", "⚆", "⚉"]; // Tokens to be replaced with cat faces
-                  const CAT_FACES = ["'^'", "'^'", "'^'", "-^-", "-^-", "o^o", "-^0", "0^-", "0^0"]; // Possible cat faces
+                  // These tokens below are just random emojis that can be put in the text content and will replaced
+                  // by the characters in `currentCatFace` at render time.
+                  const CAT_TOKENS = ["⚈", "⚆", "⚉"];
+                  const CAT_FACES = ["•^•", "•^•", "0^0", "0^0", "-^-", "-^-", "-^•", "•^-"]; // ["'^'", "o^o"]
                   let currentCatFace = CAT_FACES[Math.floor(Math.random() * CAT_FACES.length)];
 
-                  const SMALL_DISPLAY_WARNING = "[b]it looks like you're on mobile or a small display. fyi this website is best viewed on a computer with a larger display[/b]";
+                  // Warning for small displays
+                  const SMALL_DISPLAY_WARNING = "[b]it looks like you're on mobile or have a small display. fyi the animation looks best on a computer with a larger display[/b]";
 
                   // Website content
                   const CONTENT = [
                         "welcome to the personal homepage of [b]takaki oshima[/b]",
                         ...(window.innerWidth < 1000 ? [SMALL_DISPLAY_WARNING] : []),
                         `
-                              (this website is still a work-in-progress)
-                        `,
-                        `
                               work
                               ~~~~
-                              hi, i'm an independent researcher. my interests span a bunch of domains including
+                              my main work is as an independent researcher. my interests span a bunch of domains including
                                 - ai
                                 - automated market making protocols
                                 - quantitative sports betting
@@ -74,13 +74,15 @@
                               books
                               ~~~~~
                               below are my favourite books or books which have influenced me in some way. in no particular order.
-                                - what i talk about when i talk about running by haruki murakami
+                                - what i talk about when i talk about running by haruki murakami (this book got me into running)
                                 - folding beijing by hao jingfang
                                 - siddhartha by hermann hesse
                                 - the three body problem series by liu cixin
                                 - the almanack of naval ravikant by eric jorgenson
                                 - sapiens by yuval noah harari
                                 - the dispossessed by ursula k. le guin
+                                - why we sleep by matthew walker (this book scared me into trying to sleep better)
+                                - the life-changing magic of tidying up by marie kondo (this book made me more into a minimalist)
                         `,
                         `
                               tea
@@ -92,23 +94,23 @@
                               ~~~~~~~~~~~~~~~~~~
                               i'd been meaning to make a personal website for a while but never got round to it because i didn't really have a need for one. i still don't have a need for one but i did have an idea (text dancing around then settling into place) and also had an itch to create something, so i made this in february 2025.
 
-                              if you refresh the page, it'll be different every time. the characters and the layout of the text are randomly generated on the fly.
+                              if you refresh the page, it'll be different every time. the character positions and the layout of the text are randomly generated on the fly.
 
                               this site is best viewed on a large display. it uses my favourite coding font, [source code pro](https://adobe-fonts.github.io/source-code-pro/).
 
                               it takes inspiration from the work of generative artists like [andreas gysin](https://ertdfgcvb.xyz/) and more generally from the field of creative coding such as [kim asendorf](https://kimasendorf.com/)'s [pixel sorting algorithm](https://github.com/kimasendorf/ASDFPixelSort).
                         `,
                         `
-                              how it was made
-                              ~~~~~~~~~~~~~~~
-                              the logic behind the dancing text is pretty simple. each character has a random velocity and mass and i take 2x2 groups of characters and rotate them clockwise or counterclockwise depending on their combined angular momentum. so each frame, every character moves exactly one step - characters aren't allowed to teleport or stay still (until they reach their final position).
+                              about the animation
+                              ~~~~~~~~~~~~~~~~~~~
+                              each character has a random velocity and mass and i take 2x2 groups of characters and rotate them clockwise or counterclockwise depending on their combined angular momentum. so each frame, every character moves exactly one step - characters aren't allowed to teleport or stay still (until they reach their final position). these steps are deterministic so can be run backwards to figure out where the characters should start in order to end up in the right positions.
                         `,
                         `
                               source code
                               ~~~~~~~~~~~
                               the source code for this website can be found on [github](https://github.com/toshima/homepage).
 
-                              it's contained in a single ~500 line html file and it should be pretty readable, however i'm not a js main so it probably won't be written in an idiomatic way.
+                              it's contained in a single ~500 line html file and it should be pretty readable. but i'm not a js main so it's not really written in an idiomatic way.
                         `,
                         `
                               ai seems to be getting really good really quickly. my framework rn is to:
@@ -118,7 +120,7 @@
                         `
                                /\\_/\\
                               ( ⚈.⚉ )
-                                 ⚆
+                               " ⚆ "
                         `,
                         `
                               "a journey of a thousand miles begins with a single step" - lao tzu
@@ -127,6 +129,9 @@
                               socials
                               ~~~~~~~
                               i don't use social media much but i have accounts on [github](https://github.com/toshima/) and (less actively) on [twitter](https://x.com/takakioshima/) and [linkedin](https://www.linkedin.com/in/takakioshima/).
+                        `,
+                        `
+                              last updated in february 2025
                         `,
                   ];
 
@@ -250,8 +255,8 @@
                                           formattedChar: {char: ' ', link: null, bold: false},
                                           mass: sampleExponential(1),
                                           rowVelocity: sampleGaussian(),
-                                          columnVelocity: 3 * sampleGaussian(),  // We want more horizontal movement than vertical
-                                          stopStep: sampleUniformInt(0.9 * NUM_STEPS, NUM_STEPS),
+                                          columnVelocity: sampleGaussian(),
+                                          stopStep: sampleUniformInt(0.7 * NUM_STEPS, NUM_STEPS),
                                           row: r,
                                           column: c,
                                     });
@@ -282,11 +287,9 @@
                         // Populate the cells with the characters from the simulation
                         for (const block of textBlocks) {
                               for (const [r, line] of block.lines.entries()) {
-                                    // Random shift to avoid the left side of the text exactly lining up
-                                    const offset = 0; //`sampleUniformInt(0, 1);
                                     for (const [c, formattedChar] of line.entries()) {
                                           // Find the cell that ended up in this position in the simulation
-                                          const simCell = simulatedCellMap[`${block.row + r},${block.column + c + offset}`];
+                                          const simCell = simulatedCellMap[`${block.row + r},${block.column + c}`];
                                           if (simCell) {
                                                 // Update the cell in the simulated cell's initial position
                                                 const cell = cellMap[`${simCell.initialRow},${simCell.initialColumn}`];
@@ -385,7 +388,7 @@
                         return angularMomentum;
                   }
 
-                  // Create a map to look up cells by their row and column
+                  // Create a map to look up cells by their row and column for efficient lookup
                   const createCellMap = (cells) => {
                         const cellMap = {};
                         cells.forEach(cell => {
@@ -394,10 +397,11 @@
                         return cellMap;
                   }
 
+                  // Sample a background color close to white
                   const sampleBackgroundColor = () => {
                         const r = sampleUniformInt(245, 255);
                         const g = sampleUniformInt(245, 255);
-                        const b = sampleUniformInt(245, 250);
+                        const b = sampleUniformInt(245, 250); // Want less blue than red or green
                         return `rgb(${r}, ${g}, ${b})`;
                   }
 
@@ -418,6 +422,9 @@
                         const theta = 2 * Math.PI * Math.random();
                         return r * Math.cos(theta);
                   }
+
+                  // Sample and set a random background color
+                  document.body.style.backgroundColor = sampleBackgroundColor();
 
                   // Calculate number of columns and min rows based on window size.
                   // Subtract 1 so we don't see scrollbars.
@@ -446,13 +453,10 @@
                   const cells = generateCells(numRows, numColumns);
                   simulateAndPopulateCellChars(cells, numRows, numColumns, textBlocks);
 
-                  // Sample and set a random background color
-                  document.body.style.backgroundColor = sampleBackgroundColor();
-
                   // Run and display the simulation
                   const state = {cells, numRows, numColumns, step: 0};
-                  display(state);
                   const intervalId = setInterval(() => update(state), INTERVAL_MS);
+                  display(state);
             }
 
             document.fonts.ready.then(() => {
