@@ -42,7 +42,7 @@
                   // Settings
                   const MARGIN_TOP = 0.03; // Margin at top of page
                   const MARGIN_BOTTOM = 0.02; // Margin at bottom of page
-                  const MARGIN_SIDE = window.innerWidth < 1000 ? 0.1 : 0.2; // Margin on each side of page
+                  const MARGIN_SIDE = 0.1; // Margin on each side of page
                   const NUM_STEPS = 200; // Number of steps in the simulation
                   const INTERVAL_MS = 60; // Interval between steps in the simulation
 
@@ -50,9 +50,12 @@
                   const CAT_FACES = ["-^-", "o^o", "-^0", "0^-", "'^'", "'^'", "'^'", "0^0"]; // Possible cat faces
                   let currentCatFace = "o^o";
 
+                  const SMALL_DISPLAY_WARNING = "[b]it looks like you're on mobile or a small display. fyi this website is best viewed on a computer with a larger display[/b]";
+
                   // Website content
                   const CONTENT = [
                         "welcome to the personal homepage of [b]takaki oshima[/b]",
+                        ...(window.innerWidth < 1000 ? [SMALL_DISPLAY_WARNING] : []),
                         `
                               (this website is still a work-in-progress)
                         `,
@@ -107,9 +110,12 @@
                                  ⚆
                         `,
                         `
+                              "a journey of a thousand miles begins with a single step" - lao tzu
+                        `,
+                        `
                               socials
                               ~~~~~~~
-                              you can find me on [github](https://github.com/toshima/) and (less actively) on [twitter](https://x.com/takakioshima) and [linkedin](https://www.linkedin.com/in/takakioshima/).
+                              you can find me on [github](https://github.com/toshima/) and (less actively) on [twitter](https://x.com/takakioshima/) and [linkedin](https://www.linkedin.com/in/takakioshima/).
                         `,
                   ];
 
