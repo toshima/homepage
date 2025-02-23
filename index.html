@@ -47,8 +47,8 @@
                   const INTERVAL_MS = 60; // Interval between steps in the simulation
 
                   const CAT_TOKENS = ["⚈", "⚆", "⚉"]; // Tokens to be replaced with cat faces
-                  const CAT_FACES = ["-^-", "o^o", "-^0", "0^-", "'^'", "'^'", "'^'", "0^0"]; // Possible cat faces
-                  let currentCatFace = "o^o";
+                  const CAT_FACES = ["'^'", "'^'", "'^'", "-^-", "-^-", "o^o", "-^0", "0^-", "0^0"]; // Possible cat faces
+                  let currentCatFace = CAT_FACES[Math.floor(Math.random() * CAT_FACES.length)];
 
                   const SMALL_DISPLAY_WARNING = "[b]it looks like you're on mobile or a small display. fyi this website is best viewed on a computer with a larger display[/b]";
 
@@ -68,14 +68,7 @@
                                 - quantitative sports betting
                                 - creative coding
 
-                              in the past i worked as a swe at [google](https://google.com/) and later as an hft trader. i also cofounded a startup and researched and designed decentralized protocols there.
-                        `,
-                        `
-                              how i made this
-                              ~~~~~~~~~~~~~~~
-                              the algorithm behind this website works by giving each character (including blank spaces) a random velocity and mass. then each 2x2 square is rotated clockwise or counterclockwise depending on the angular momentum of the 4 characters. to get the characters to end up in their final positions, a simulation is first played out and the target text is written out, then the characters are reset back to their original positions and the algorithm is run again for real.
-
-                              if you refresh the page and rerun the algorithm, it'll be different every time. stuff like the starting positions of the characters are all randomized. the positions of the text and the background color will also be different.
+                              in the past i worked as a swe at [google](https://google.com/) and as an hft quant. i later cofounded a startup where i researched and designed decentralized protocols.
                         `,
                         `
                               books
@@ -90,17 +83,30 @@
                                 - the dispossessed by ursula k. le guin
                         `,
                         `
+                              tea
+                              ~~~
                               i like tea, especially peppermint and ali shan.
                         `,
                         `
                               about this website
                               ~~~~~~~~~~~~~~~~~~
-                              this site was written in pure javascript. best viewed on a large display. it uses my favourite coding font, [source code pro](https://adobe-fonts.github.io/source-code-pro/).
+                              the logic behind the flying/dancing characters is pretty simple. each character has a random velocity and mass and i take 2x2 groups of characters and rotate them clockwise or counterclockwise depending on their combined angular momentum. so each frame, every character moves exactly one step - characters aren't allowed to teleport or stay still (until they reach their final position).
 
-                              the design and algorithm behind this website takes inspiration from the work of generative artists like [andreas gysin](https://ertdfgcvb.xyz/) and from [kim asendorf](https://kimasendorf.com/)'s [pixel sorting algorithm](https://github.com/kimasendorf/ASDFPixelSort).
+                              if you refresh the page, it'll be different every time. the characters and the layout of the text are randomly generated on the fly.
+
+                              this site is best viewed on a large display. it uses my favourite coding font, [source code pro](https://adobe-fonts.github.io/source-code-pro/).
+
+                              it takes inspiration from the work of generative artists like [andreas gysin](https://ertdfgcvb.xyz/) and more generally from the field of creative coding such as [kim asendorf](https://kimasendorf.com/)'s [pixel sorting algorithm](https://github.com/kimasendorf/ASDFPixelSort).
                         `,
                         `
-                              ai seems to be getting really good really quickly. my basic framework is to
+                              source code
+                              ~~~~~~~~~~~
+                              the source code for this website can be found on [github](https://github.com/toshima/homepage).
+
+                              it's contained in a single ~500 line html file and it should be pretty readable, however i'm not a js main so it probably won't be written in an idiomatic way.
+                        `,
+                        `
+                              ai seems to be getting really good really quickly. my framework rn is to:
                                 1. use ai for the things it can do (eg tools like cursor)
                                 2. use my time doing things it can't do yet (eg building a business)
                         `,
@@ -115,7 +121,7 @@
                         `
                               socials
                               ~~~~~~~
-                              you can find me on [github](https://github.com/toshima/) and (less actively) on [twitter](https://x.com/takakioshima/) and [linkedin](https://www.linkedin.com/in/takakioshima/).
+                              i don't use social media much but i have accounts on [github](https://github.com/toshima/) and (less actively) on [twitter](https://x.com/takakioshima/) and [linkedin](https://www.linkedin.com/in/takakioshima/).
                         `,
                   ];
 
