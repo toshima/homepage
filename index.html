@@ -56,9 +56,11 @@
                   const textBlocks = [
                         "welcome to the personal homepage of [b]takaki oshima[/b]",
                         `
-                              this website is still a work-in-progress
+                              (this website is still a work-in-progress)
                         `,
                         `
+                              work
+                              ~~~~
                               hi, i'm an independent researcher. my interests span a bunch of domains including
                                 - ai
                                 - automated market making protocols
@@ -68,11 +70,15 @@
                               in the past i worked as a swe at [google](https://google.com/) and later as an hft trader.
                         `,
                         `
+                              how i made this
+                              ~~~~~~~~~~~~~~~
                               the algorithm behind this website works by giving each character (including blank spaces) a random velocity and mass. then each 2x2 square is rotated clockwise or counterclockwise depending on the angular momentum of the 4 characters. to get the characters to end up in their final positions, a simulation is first played out and the target text is written out, then the characters are reset back to their original positions and the algorithm is run again for real.
 
                               if you refresh the page and rerun the algorithm, it'll be different every time. stuff like the starting positions of the characters are all randomized. the positions of the text and the background color will also be different.
                         `,
                         `
+                              books
+                              ~~~~~
                               below are my favourite books or books which have influenced me in some way. in no particular order.
                                 - what i talk about when i talk about running by haruki murakami
                                 - folding beijing by hao jingfang
@@ -86,6 +92,10 @@
                               i like tea, especially peppermint and ali shan.
                         `,
                         `
+                              about this website
+                              ~~~~~~~~~~~~~~~~~~
+                              this site was written in pure javascript. best viewed on a large display. it uses my favourite coding font, [source code pro](https://adobe-fonts.github.io/source-code-pro/).
+
                               the design and algorithm behind this website takes inspiration from the work of generative artists like [andreas gysin](https://ertdfgcvb.xyz/) and from [kim asendorf](https://kimasendorf.com/)'s [pixel sorting algorithm](https://github.com/kimasendorf/ASDFPixelSort).
                         `,
                         `
@@ -95,10 +105,9 @@
                         `,
                         catFaces[Math.floor(Math.random() * (catFaces.length))],
                         `
+                              socials
+                              ~~~~~~~
                               you can find me on [github](https://github.com/toshima/) and (less actively) on [twitter](https://x.com/takakioshima) and [linkedin](https://www.linkedin.com/in/takakioshima/).
-                        `,
-                        `
-                              this site was written in pure javascript. best viewed on a large display. it uses my favourite coding font, [source code pro](https://adobe-fonts.github.io/source-code-pro/).
                         `,
                   ];
 
