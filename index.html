@@ -1,3 +1,9 @@
+<!--
+Todo
+- Add stuff to readme
+- Clean up markdown parsing. Eg something like [link_twitter]text[/link_twitter] with a separate links mapping.
+- Use two space indent instead of four
+-->
 <!DOCTYPE html>
 <html>
 <head>
@@ -47,11 +53,19 @@
                   const NUM_STEPS = 150; // Number of steps in the animation. Determines how long the animation lasts.
                   const INTERVAL_MS = 60; // Interval between steps in the animation. Determines how fast the characters move.
 
-                  // These tokens below are just random emojis that can be put in the text content and will replaced
-                  // by the characters in `currentCatFace` at render time.
-                  const CAT_TOKENS = ["⚈", "⚆", "⚉"];
-                  const CAT_FACES = ["•^•", "•^•", "•^•", "0^0", "0^0", "0^0", "-^-", "-^-", "-^-", "-^•", "•^-"];
-                  let currentCatFace;
+                  // Select a cat face based on the current time
+                  let CAT_FACE;
+                  const hour = new Date().getHours();
+                  if (10 <= hour && hour <= 11) {
+                        // Morning (10am - 11am)
+                        CAT_FACE = "[cat] /\\_/\\\n( [eye]•[/eye].[eye]-[/eye] )\n   ^  [/cat]";
+                  } else if (12 <= hour || hour <= 1) {
+                        // Day (12pm - 1am)
+                        CAT_FACE = "[cat] /\\_/\\\n( [eye]•[/eye].[eye]•[/eye] )\n   ^  [/cat]";
+                  } else {
+                        // Night (2am - 9am)
+                        CAT_FACE = "[cat] /\\_/\\\n( [eye]-[/eye].[eye]-[/eye] )\n   ^  [/cat]";
+                  }
 
                   // Warning for small displays
                   const SMALL_DISPLAY_WARNING = "[b]it looks like you're on mobile or have a small display. fyi the animation looks best viewed on a computer with a larger display[/b]";
@@ -81,7 +95,7 @@
                                 - quantitative sports betting
                                 - creative coding
 
-                              in the past i worked as a swe at [google](https://google.com/) and as a quant trader at an hft firm. i later cofounded a startup where i researched and built decentralized protocols.
+                              in the past i worked as a swe at [link https://google.com/]google[/link] and as a quant trader at an hft firm. i later cofounded a startup where i researched and built decentralized protocols.
                         `,
                         `
                               books
@@ -109,19 +123,19 @@
 
                               if you refresh the page, it'll be different every time. the character positions and the layout of the text are randomly generated on the fly.
 
-                              this site is best viewed on a large display. it uses my favourite coding font, [source code pro](https://adobe-fonts.github.io/source-code-pro/).
+                              this site is best viewed on a large display. it uses my favourite coding font, [link https://adobe-fonts.github.io/source-code-pro/]source code pro[/link].
 
-                              it takes inspiration from the work of generative artists like [andreas gysin](https://ertdfgcvb.xyz/) and more generally from the field of creative coding such as [kim asendorf](https://kimasendorf.com/)'s [pixel sorting algorithm](https://github.com/kimasendorf/ASDFPixelSort).
+                              it takes inspiration from the work of generative artists like [link https://ertdfgcvb.xyz/]andreas gysin[/link] and more generally from the field of creative coding such as [link https://kimasendorf.com/]kim asendorf[/link]'s [link https://github.com/kimasendorf/ASDFPixelSort]pixel sorting algorithm[/link].
                         `,
-                        `
-                              about the animation
-                              ~~~~~~~~~~~~~~~~~~~
-                              at the start, each text character is given a random mass and velocity and its movement is governed by a bunch of simple rules. a character with a lot of mass is more likely to move in the direction it wants in a straight line. each frame, every character moves exactly one step - characters aren't allowed to teleport or stay still (until they reach their final position). these steps are also deterministic so can be run backwards to figure out where the characters should start in order to end up in the right positions.
-                        `,
+                        // `
+                        //       about the animation
+                        //       ~~~~~~~~~~~~~~~~~~~
+                        //       at the start, each text character is given a random mass and velocity and its movement is governed by a bunch of simple rules. a character with a lot of mass is more likely to move in the direction it wants in a straight line. each frame, every character moves exactly one step - characters aren't allowed to teleport or stay still (until they reach their final position). these steps are also deterministic so can be run backwards to figure out where the characters should start in order to end up in the right positions.
+                        // `,
                         `
                               source code
                               ~~~~~~~~~~~
-                              the source code for this website can be found on [github](https://github.com/toshima/homepage).
+                              the source code for this website can be found on [link https://github.com/toshima/homepage]github[/link].
 
                               it's written purely in javascript without any dependencies and is contained in a single ~500 line file. the code should be reasonably readable, however i'm not a js main so it wouldn't be written in a particularly idiomatic way.
                         `,
@@ -130,11 +144,7 @@
                                 1. use ai for the things it can do (eg i used llms heavily to build this site)
                                 2. use my time doing things it can't do yet (eg building a business)
                         `,
-                        `
-                               /\\_/\\
-                              ( ⚈.⚉ )
-                               ˶ ⚆ ˶
-                        `,
+                        CAT_FACE,
                         `
                               "some things are in our control and others not. things in our control are opinion, pursuit, desire, aversion, and, in a word, whatever are our own actions. things not in our control are body, property, reputation, command, and, in one word, whatever are not our actions." - epictetus
                         `,
@@ -144,7 +154,7 @@
                         `
                               socials
                               ~~~~~~~
-                              i don't use social media much but i have accounts on [github](https://github.com/toshima/) and (less actively) on [twitter](https://x.com/takakioshima/) and [linkedin](https://www.linkedin.com/in/takakioshima/).
+                              i don't use social media much but i have accounts on [link https://github.com/toshima/]github[/link] and (less actively) on [link https://x.com/takakioshima/]twitter[/link] and [link https://www.linkedin.com/in/takakioshima/]linkedin[/link].
                         `,
                         `
                               this site was last updated february 2025
@@ -160,37 +170,67 @@
 
                   // Take in a string and return an array of characters together with their formatting.
                   // For example, "[b]h[/b]i" -> [{char: "h", link: null, bold: true}, {char: "i", link: null, bold: false}]
-                  function parseFormattedCharacters(input) {
-                        const chars = [...input]; // This splits correctly for multi-byte characters like emojis
+                  // function parseFormattedCharacters(input) {
+                  //       const chars = [...input]; // This splits correctly for multi-byte characters like emojis
+                  //       const result = [];
+                  //       let i = 0;
+                  //       while (i < chars.length) {
+                  //             if (chars[i] === '[') {
+                  //                   if (chars.slice(i, i + 3).join('') === '[b]') {
+                  //                         const j = chars.indexOf('[', i + 3);
+                  //                         if (j !== -1 && chars.slice(j, j + 4).join('') === '[/b]') {
+                  //                               const boldText = chars.slice(i + 3, j);
+                  //                               for (const char of boldText) {
+                  //                                     result.push({char, link: null, bold: true});
+                  //                               }
+                  //                               i = j + 4; // Skip past "[/b]"
+                  //                               continue;
+                  //                         }
+                  //                   }
+                  //                   const j = chars.indexOf(']', i + 1);
+                  //                   const k = chars.indexOf(')', i + 1);
+                  //                   if (j !== -1 && k !== -1 && chars[j+1] === "(") {
+                  //                         const linkText = chars.slice(i + 1, j).join('');
+                  //                         const linkUrl = chars.slice(j + 2, k).join('');
+                  //                         for (const char of linkText) {
+                  //                               result.push({char, link: linkUrl, bold: false});
+                  //                         }
+                  //                         i = k + 1; // Skip past ")"
+                  //                         continue;
+                  //                   }
+                  //             }
+                  //             result.push({char: chars[i], link: null, bold: false});
+                  //             i++;
+                  //       }
+                  //       return result;
+                  // }
+
+                  function parseTags(text) {
                         const result = [];
+                        const activeTags = [];
                         let i = 0;
-                        while (i < chars.length) {
-                              if (chars[i] === '[') {
-                                    if (chars.slice(i, i + 3).join('') === '[b]') {
-                                          const j = chars.indexOf('[', i + 3);
-                                          if (j !== -1 && chars.slice(j, j + 4).join('') === '[/b]') {
-                                                const boldText = chars.slice(i + 3, j);
-                                                for (const char of boldText) {
-                                                      result.push({char, link: null, bold: true});
-                                                }
-                                                i = j + 4; // Skip past "[/b]"
-                                                continue;
+                        while (i < text.length) {
+                              const j = text.indexOf(']', i);
+                              if (text.slice(i, i + 1) === '[' && j !== -1) {
+                                    if (text.slice(i, i + 2) === '[/') {
+                                          // Closing tag: [/tag]
+                                          const tag = text.slice(i + 2, j);
+                                          const index = activeTags.findIndex(t => t.name === tag);
+                                          if (index !== -1) {
+                                                activeTags.splice(index, 1);
                                           }
+                                    } else {
+                                          // Opening tag: [tag arg1 arg2]
+                                          const tagContent = text.slice(i + 1, j);
+                                          const parts = tagContent.split(/\s+/);
+                                          activeTags.push({name: parts[0], args: parts.slice(1)});
                                     }
-                                    const j = chars.indexOf(']', i + 1);
-                                    const k = chars.indexOf(')', i + 1);
-                                    if (j !== -1 && k !== -1 && chars[j+1] === "(") {
-                                          const linkText = chars.slice(i + 1, j).join('');
-                                          const linkUrl = chars.slice(j + 2, k).join('');
-                                          for (const char of linkText) {
-                                                result.push({char, link: linkUrl, bold: false});
-                                          }
-                                          i = k + 1; // Skip past ")"
-                                          continue;
-                                    }
+                                    i = j + 1;
+                              } else {
+                                    // Regular character
+                                    result.push({char: text[i], tags: [...activeTags]});
+                                    i++;
                               }
-                              result.push({char: chars[i], link: null, bold: false});
-                              i++;
                         }
                         return result;
                   }
@@ -268,8 +308,8 @@
                                     cells.push({
                                           initialRow: r,
                                           initialColumn: c,
-                                          formattedChar: {char: ' ', link: null, bold: false},
-                                          mass: sampleExponential(1),
+                                          // formattedChar: {char: ' ', link: null, bold: false},
+                                          formattedChar: {char: ' ', tags: []},
                                           rowVelocity: sampleGaussian(),
                                           columnVelocity: sampleGaussian(),
                                           stopStep: sampleUniformInt(0.7 * NUM_STEPS, NUM_STEPS),
@@ -320,26 +360,12 @@
                   // Update the container with multiple lines of random text
                   const update = (state) => {
                         evolve(state);
-                        updateCatFace();
                         display(state);
                         state.step += 1;
 
-                        // We keep running after NUM_STEPS has elapsed so the cat face can keep changing
-                        // if (state.step >= NUM_STEPS) {
-                        //       clearInterval(intervalId);
-                        //       return;
-                        // }
-                  }
-
-                  const updateCatFace = () => {
-                        // Use pseudo-random cat face based on the current time so that the cat face
-                        // is the same for everyone who's currently viewing it.
-                        // Use two cycles with different periods so it doesn't look like it's just changing
-                        // at a fixed rate.
-                        const t = Date.now();
-                        const x = Math.sin(Math.floor(t / 2_000 / 3) + Math.floor(t / 2_000 / 5)) * 10_000;
-                        const r = x - Math.floor(x);
-                        currentCatFace = CAT_FACES[Math.floor(r * CAT_FACES.length)];
+                        if (state.step >= NUM_STEPS) {
+                              clearInterval(intervalId);
+                        }
                   }
 
                   // Update the webpage with the current state of the simulation
@@ -347,18 +373,20 @@
                         let lines = [];
                         for (let r = 0; r < numRows; r++) {
                               const rowCells = cells.filter(cell => cell.row === r).sort((a, b) => a.column - b.column);
-                              lines.push(rowCells.map(({formattedChar: {char, link, bold}, stopStep}) => {
-                                    if (bold) {
-                                          return `<strong>${char}</strong>`;
-                                    } else if (link && step >= stopStep) {
-                                          // Only show links after they're in their final position
-                                          return `<a href="${link}" style="color: inherit; text-decoration: underline;">${char}</a>`;
-                                    } else if (CAT_TOKENS.includes(char)) {
-                                          // Replace the token with the corresponding one in the current cat face
-                                          return currentCatFace[CAT_TOKENS.indexOf(char)];
-                                    } else {
-                                          return char;
+                              lines.push(rowCells.map(({formattedChar: {char, tags}, stopStep}) => {
+                                    let result = char;
+                                    for (const tag of tags) {
+                                          if (tag.name === 'b') {
+                                                result = `<strong>${result}</strong>`;
+                                          } else if (tag.name === 'link' && step >= stopStep) {
+                                                result = `<a href="${tag.args[0]}" style="color: inherit; text-decoration: underline;">${result}</a>`;
+                                          } else if (tag.name === 'cat' && step >= stopStep) {
+                                                result = `<span onmouseover="onCatHover()" onmouseout="onCatUnhover()">${result}</span>`;
+                                          } else if (tag.name === 'eye' && step >= stopStep) {
+                                                result = `<span class="cat-eye" data-original="${char}" onmouseover="onCatHover()" onmouseout="onCatUnhover()" data-hover="0">${result}</span>`;
+                                          }
                                     }
+                                    return result;
                               }).join(''));
                         }
                         const container = document.getElementById('container');
@@ -403,7 +431,7 @@
                               const dest = group[transform[i]];
                               const dr = dest.row - cell.row;
                               const dc = dest.column - cell.column;
-                              score += cell.mass * (dr * cell.rowVelocity + dc * cell.columnVelocity);
+                              score += dr * cell.rowVelocity + dc * cell.columnVelocity;
                         }
                         return score;
                   }
@@ -454,7 +482,7 @@
 
                   // Parse the website text and wrap it into lines
                   const textBlocks = CONTENT.map(string => {
-                        const text = parseFormattedCharacters(dedent(string));
+                        const text = parseTags(dedent(string));
                         const minWidth = string.length > 100 ? 30 : 20;
                         const maxWidth = Math.min(numColumns * (1 - 2 * MARGIN_SIDE), 60);
                         const width = sampleUniformInt(minWidth, maxWidth);
@@ -476,11 +504,27 @@
                   const state = {cells, numRows, numColumns, step: 0};
                   const intervalId = setInterval(() => update(state), INTERVAL_MS);
                   display(state);
+
             }
 
             document.fonts.ready.then(() => {
                   dance();
             });
+
+            const onCatHover = () => {
+                  const spans = document.querySelectorAll('.cat-eye');
+                  spans.forEach(span => {
+                        span.textContent = span.getAttribute('data-hover');
+                  });
+            }
+
+            const onCatUnhover = () => {
+                  const spans = document.querySelectorAll('.cat-eye');
+                  spans.forEach(span => {
+                        span.textContent = span.getAttribute('data-original');
+                  });
+            }
+
       </script>
 </body>
 </html>
