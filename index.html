@@ -50,8 +50,8 @@
                   // These tokens below are just random emojis that can be put in the text content and will replaced
                   // by the characters in `currentCatFace` at render time.
                   const CAT_TOKENS = ["⚈", "⚆", "⚉"];
-                  const CAT_FACES = ["•^•", "•^•", "0^0", "0^0", "-^-", "-^-", "-^•", "•^-"];
-                  let currentCatFace = CAT_FACES[Math.floor(Math.random() * CAT_FACES.length)];
+                  const CAT_FACES = ["•^•", "•^•", "•^•", "0^0", "0^0", "0^0", "-^-", "-^-", "-^-", "-^•", "•^-"];
+                  let currentCatFace;
 
                   // Warning for small displays
                   const SMALL_DISPLAY_WARNING = "[b]it looks like you're on mobile or have a small display. fyi the animation looks best viewed on a computer with a larger display[/b]";
@@ -136,7 +136,7 @@
                                ˶ ⚆ ˶
                         `,
                         `
-                              "you have power over your mind - not outside events. realize this, and you will find strength." - marcus aurelius
+                              "some things are in our control and others not. things in our control are opinion, pursuit, desire, aversion, and, in a word, whatever are our own actions. things not in our control are body, property, reputation, command, and, in one word, whatever are not our actions." - epictetus
                         `,
                         // `
                         //       "a journey of a thousand miles begins with a single step" - lao tzu
@@ -332,10 +332,13 @@
                   }
 
                   const updateCatFace = () => {
-                        // Use pseudo-random cat face based on the current epoch so that the cat face
+                        // Use pseudo-random cat face based on the current time so that the cat face
                         // is the same for everyone who's currently viewing it.
-                        epoch = Math.floor(Date.now() / 1_000);
-                        const r = ((epoch * 9301 + 49297) % 233280) / 233280;
+                        // Use two cycles with different periods so it doesn't look like it's just changing
+                        // at a fixed rate.
+                        const t = Date.now();
+                        const x = Math.sin(Math.floor(t / 2_000 / 3) + Math.floor(t / 2_000 / 5)) * 10_000;
+                        const r = x - Math.floor(x);
                         currentCatFace = CAT_FACES[Math.floor(r * CAT_FACES.length)];
                   }
 
