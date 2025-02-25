@@ -52,9 +52,6 @@ Todo
                   const NUM_STEPS = 150; // Number of steps in the animation. Determines how long the animation lasts.
                   const INTERVAL_MS = 60; // Interval between steps in the animation. Determines how fast the characters move.
 
-                  // Warning for small displays
-                  const SMALL_DISPLAY_WARNING = "[b]it looks like you're on mobile or have a small display. fyi the animation looks best viewed on a computer with a larger display[/b]";
-
                   // Each transform contains where the indexes 0, 1, 2, 3 will map to if the original matrix looks like below. Right now we only consider horizontal and vertical reflections
                   // to avoid the simulation taking too long before the display starts.
                   // 0 1
@@ -71,6 +68,9 @@ Todo
                   const CAT_EYE_OPEN = "•";
                   const CAT_EYE_CLOSED = "-";
                   const CAT_EYE_POKED = "0";
+
+                  // Warning for small displays
+                  const SMALL_DISPLAY_WARNING = "[b]it looks like you're on mobile or have a small display. fyi the animation looks best viewed on a computer with a larger display[/b]";
 
                   // Website content
                   const CONTENT = [
@@ -134,7 +134,11 @@ Todo
                                 1. use ai for the things it can do (eg i used llms heavily to build this site)
                                 2. use my time doing things it can't do yet (eg building a business)
                         `,
-                        `[cat] /\\_/\\\n( [eye]${CAT_EYE_CLOSED}[/eye].[eye]${CAT_EYE_CLOSED}[/eye] )\n   ^  [/cat]`,
+                        `
+                              [cat] /\\_/\\
+                              ( [eye]${CAT_EYE_CLOSED}[/eye].[eye]${CAT_EYE_CLOSED}[/eye] )
+                                 ^  [/cat]
+                        `,
                         `
                               "some things are in our control and others not. things in our control are opinion, pursuit, desire, aversion, and, in a word, whatever are our own actions. things not in our control are body, property, reputation, command, and, in one word, whatever are not our actions." - epictetus
                         `,
@@ -311,14 +315,17 @@ Todo
                   }
 
                   // Update the container with multiple lines of random text
-                  const update = (state) => {
-                        evolve(state);
-                        display(state);
-                        state.step += 1;
-
+                  const update = (timestamp, state) => {
                         if (state.step >= NUM_STEPS) {
-                              clearInterval(intervalId);
+                              return;
                         }
+                        if (state.nextFrameTime === null || timestamp > state.nextFrameTime) {
+                              evolve(state);
+                              display(state);
+                              state.step += 1;
+                              state.nextFrameTime = timestamp + INTERVAL_MS;
+                        }
+                        requestAnimationFrame((t) => update(t, state));
                   }
 
                   // Update the webpage with the current state of the simulation
@@ -332,7 +339,7 @@ Todo
                                           if (tag.name === 'b') {
                                                 result = `<strong>${result}</strong>`;
                                           } else if (tag.name === 'link' && step >= stopStep) {
-                                                result = `<a href="${tag.args[0]}" style="color: inherit; text-decoration: underline;">${result}</a>`;
+                                                result = `<a href="${tag.args[0]}" target="_blank" style="color: inherit; text-decoration: underline;">${result}</a>`;
                                           } else if (tag.name === 'cat' && step >= stopStep) {
                                                 result = `<span class="cat">${result}</span>`;
                                           } else if (tag.name === 'eye' && step >= stopStep) {
@@ -346,10 +353,10 @@ Todo
                         container.innerHTML = lines.join('\n');
 
                         // Add event listeners
-                        const elements = [...document.getElementsByClassName('cat'), ...document.getElementsByClassName('eye')];
-                        for (const element of elements) {
-                              element.addEventListener('mouseover', onCatHover);
-                              element.addEventListener('mouseout', onCatUnhover);
+                        const spans = [...document.querySelectorAll('.cat'), ...document.querySelectorAll('.eye')];
+                        for (const span of spans) {
+                              span.addEventListener('mouseover', onCatHover);
+                              span.addEventListener('mouseout', onCatUnhover);
                         }
                   }
 
@@ -361,12 +368,15 @@ Todo
                         // We look at tilings of 2x2 squares of cells, alternating between starting at (0, 0) and (1, 1)
                         for (let r = step % 2; r < numRows; r += 2) {
                               for (let c = step % 2; c < numColumns; c += 2) {
+                                    // 2x2 square of cells
                                     const group = [
                                           cellMap[`${r},${c}`],
                                           cellMap[`${r},${(c + 1) % numColumns}`],
                                           cellMap[`${(r + 1) % numRows},${(c + 1) % numColumns}`],
                                           cellMap[`${(r + 1) % numRows},${c}`],
                                     ];
+
+                                    // Ignore this 2x2 group if `stopStep` has been reached for any of the characters
                                     if (group.some(({stopStep}) => step >= stopStep)) {
                                           continue;
                                     }
@@ -432,16 +442,18 @@ Todo
                   }
 
                   // Make the cat's eyes blink
-                  const blinkCat = () => {
-                        catEyesOpen = !catEyesOpen;
-                        const spans = document.querySelectorAll('.eye');
-                        spans.forEach(span => {
-                              span.textContent = catEyesOpen ? CAT_EYE_OPEN : CAT_EYE_CLOSED;
-                        });
-
-                        // Sample log-normal wait time
-                        const wait = Math.exp(sampleGaussian()) * (catEyesOpen ? 3 : 0.15);
-                        setTimeout(blinkCat, wait * 1000);
+                  const blinkCat = (timestamp, state) => {
+                        if (timestamp > state.nextFrameTime + INTERVAL_MS) {
+                              state.catEyesOpen = !state.catEyesOpen;
+                              const spans = document.querySelectorAll('.eye');
+                              for (const span of spans) {
+                                    span.textContent = state.catEyesOpen ? CAT_EYE_OPEN : CAT_EYE_CLOSED;
+                              }
+                              // Sample log-normal wait time
+                              const wait = Math.exp(sampleGaussian()) * (state.catEyesOpen ? 3 : 0.15) * 1000;
+                              state.nextFrameTime = timestamp + wait;
+                        }
+                        requestAnimationFrame(t => blinkCat(t, state));
                   }
 
                   const onCatHover = () => {
@@ -488,11 +500,11 @@ Todo
                   simulateAndPopulateCellChars(cells, numRows, numColumns, textBlocks);
 
                   // Run and display the simulation
-                  const state = {cells, numRows, numColumns, step: 0};
-                  const intervalId = setInterval(() => update(state), INTERVAL_MS);
+                  const state = {cells, numRows, numColumns, step: 0, nextFrameTime: 0};
+                  requestAnimationFrame(t => update(t, state));
                   display(state);
 
-                  blinkCat();
+                  requestAnimationFrame(t => blinkCat(t, {catEyesOpen: false, nextFrameTime: 0}));
             }
 
             document.fonts.ready.then(() => {
