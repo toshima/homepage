@@ -39,8 +39,8 @@ Todo
       <div id="container"></div>
       <script>
             const dance = () => {
-                  // Update this if font size or font family changes
-                  // I couldn't find a reliable way to calculate these on-the-fly
+                  // Update these if font size or font family changes.
+                  // Couldn't find a reliable way to calculate them on-the-fly.
                   const CHAR_WIDTH = 15 * 0.6;
                   const CHAR_HEIGHT = 15 * 1.3;
 
@@ -49,13 +49,13 @@ Todo
                   const MARGIN_TOP = 0.03; // Margin at top of page
                   const MARGIN_BOTTOM = 0.02; // Margin at bottom of page
                   const MARGIN_SIDE = 0.1; // Margin on each side of page
-                  const NUM_STEPS = 150; // Number of steps in the animation. Determines how long the animation lasts.
-                  const INTERVAL_MS = 60; // Interval between steps in the animation. Determines how fast the characters move.
+                  const NUM_STEPS = 200; // Number of steps in the animation. Determines how long the animation lasts.
+                  const INTERVAL_MS = 30; // Interval between steps in the animation. Determines how fast the characters move.
 
                   // Each transform contains where the indexes 0, 1, 2, 3 will map to if the original matrix looks like below. Right now we only consider horizontal and vertical reflections
                   // to avoid the simulation taking too long before the display starts.
-                  // 0 1
-                  // 3 2
+                  // ( 0 1 )
+                  // ( 3 2 )
                   const TRANSFORMS = [
                         // [1, 2, 3, 0], // Clockwise rotation
                         // [3, 0, 1, 2], // Counterclockwise rotation
@@ -64,7 +64,7 @@ Todo
                         [2, 3, 0, 1], // Horizontal and vertical reflections
                   ]
 
-                  let catEyesOpen = true;
+                  // Characters for the cat's eyes
                   const CAT_EYE_OPEN = "•";
                   const CAT_EYE_CLOSED = "-";
                   const CAT_EYE_POKED = "0";
@@ -87,24 +87,26 @@ Todo
 
                               in the past i worked as a swe at [link https://google.com/]google[/link] and as a quant trader at an hft firm. i later cofounded a startup where i researched and built decentralized protocols.
                         `,
+                        // `
+                        //       / [reload]reload this page[/reload] /
+                        // `,
                         `
                               books
                               ~~~~~
                               below are my favourite books or books which have influenced me in some way. in no particular order.
-                                - what i talk about when i talk about running by haruki murakami (this book got me into running)
-                                - folding beijing by hao jingfang
-                                - siddhartha by hermann hesse
-                                - the three body problem series by liu cixin
-                                - the almanack of naval ravikant by eric jorgenson
-                                - sapiens by yuval noah harari
-                                - the dispossessed by ursula k. le guin
-                                - why we sleep by matthew walker (this book scared me into trying to sleep better)
-                                - the life-changing magic of tidying up by marie kondo (this book made me more into a minimalist)
+                                - [i]what i talk about when i talk about running[/i] by haruki murakami (this book got me into running)
+                                - [link https://www.uncannymagazine.com/article/folding-beijing-2/][i]folding beijing[/i][/link] by hao jingfang
+                                - [i]siddhartha[/i] by hermann hesse
+                                - [i]the three body problem[/i] series by liu cixin
+                                - [i]the almanack of naval ravikant[/i] by eric jorgenson
+                                - [i]the dispossessed[/i] by ursula k. le guin
+                                - [i]why we sleep[/i] by matthew walker (scared me into trying to sleep better)
+                                - [i]the life-changing magic of tidying up[/i] by marie kondo (made me more into a minimalist)
                         `,
                         `
                               tea
                               ~~~
-                              i like tea, especially peppermint and ali shan.
+                              i like tea especially [i]peppermint[/i] and [i]ali shan[/i].
                         `,
                         `
                               about this website
@@ -125,11 +127,13 @@ Todo
                         `
                               source code
                               ~~~~~~~~~~~
-                              the source code for this website can be found on [link https://github.com/toshima/homepage]github[/link].
+                              the source code for this website can be found [link https://github.com/toshima/homepage]here[/link].
 
-                              it's written purely in javascript without any dependencies and is contained in a single ~500 line file. the code should be reasonably readable, however i'm not a js main so it wouldn't be written in a particularly idiomatic way.
+                              the code is pretty concise and should be reasonably readable. i'm not a js main though so it's not written in a particularly idiomatic way.
                         `,
                         `
+                              misc thoughts
+                              ~~~~~~~~~~~~~
                               ai seems to be getting really good really quickly. my framework rn is to:
                                 1. use ai for the things it can do (eg i used llms heavily to build this site)
                                 2. use my time doing things it can't do yet (eg building a business)
@@ -140,10 +144,10 @@ Todo
                                  ^  [/cat]
                         `,
                         `
-                              "some things are in our control and others not. things in our control are opinion, pursuit, desire, aversion, and, in a word, whatever are our own actions. things not in our control are body, property, reputation, command, and, in one word, whatever are not our actions." - epictetus
+                              [i]"some things are in our control and others not. things in our control are opinion, pursuit, desire, aversion, and, in a word, whatever are our own actions. things not in our control are body, property, reputation, command, and, in one word, whatever are not our actions."[/i] - epictetus
                         `,
                         // `
-                        //       "a journey of a thousand miles begins with a single step" - lao tzu
+                        //       [i]"a journey of a thousand miles begins with a single step"[/i] - lao tzu
                         // `,
                         `
                               socials
@@ -151,7 +155,12 @@ Todo
                               i don't use social media much but i have accounts on [link https://github.com/toshima/]github[/link] and (less actively) on [link https://x.com/takakioshima/]twitter[/link] and [link https://www.linkedin.com/in/takakioshima/]linkedin[/link].
                         `,
                         `
-                              this site was last updated february 2025
+                              privacy policy
+                              ~~~~~~~~~~~~~~
+                              this site does not collect any data.
+                        `,
+                        `
+                              this site was last updated [i]february 2025[/i]
                         `,
                   ];
 
@@ -265,7 +274,6 @@ Todo
                                     cells.push({
                                           initialRow: r,
                                           initialColumn: c,
-                                          // formattedChar: {char: ' ', link: null, bold: false},
                                           formattedChar: {char: ' ', tags: []},
                                           rowVelocity: sampleGaussian(),
                                           columnVelocity: sampleGaussian(),
@@ -290,7 +298,7 @@ Todo
                         // Simulate all the steps without displaying anything
                         // This is the part which takes the most time before the animation starts
                         for (let i = 0; i < NUM_STEPS; i++) {
-                              evolve(simulationState);
+                              evolveCells(simulationState);
                               simulationState.step += 1;
                         }
 
@@ -315,21 +323,21 @@ Todo
                   }
 
                   // Update the container with multiple lines of random text
-                  const update = (timestamp, state) => {
+                  const updateCells = (timestamp, state) => {
                         if (state.step >= NUM_STEPS) {
                               return;
                         }
                         if (state.nextFrameTime === null || timestamp > state.nextFrameTime) {
-                              evolve(state);
-                              display(state);
+                              evolveCells(state);
+                              displayCells(state);
                               state.step += 1;
                               state.nextFrameTime = timestamp + INTERVAL_MS;
                         }
-                        requestAnimationFrame((t) => update(t, state));
+                        requestAnimationFrame((t) => updateCells(t, state));
                   }
 
                   // Update the webpage with the current state of the simulation
-                  const display = ({cells, step}) => {
+                  const displayCells = ({cells, step}) => {
                         let lines = [];
                         for (let r = 0; r < numRows; r++) {
                               const rowCells = cells.filter(cell => cell.row === r).sort((a, b) => a.column - b.column);
@@ -338,11 +346,21 @@ Todo
                                     for (const tag of tags) {
                                           if (tag.name === 'b') {
                                                 result = `<strong>${result}</strong>`;
-                                          } else if (tag.name === 'link' && step >= stopStep) {
+                                          }
+                                          // Only create tags near the end of the animation otherwise it slows it down.
+                                          // Bold is an exception as it gives the eye something to track during the animation.
+                                          if (step < Math.floor(stopStep * 0.9)) {
+                                                continue;
+                                          }
+                                          if (tag.name === 'i') {
+                                                result = `<em>${result}</em>`;
+                                          } else if (tag.name === 'link') {
                                                 result = `<a href="${tag.args[0]}" target="_blank" style="color: inherit; text-decoration: underline;">${result}</a>`;
-                                          } else if (tag.name === 'cat' && step >= stopStep) {
+                                          } else if (tag.name === 'reload') {
+                                                result = `<a href="#" onclick="location.reload(); return false;" style="color: inherit; text-decoration: underline;">${result}</a>`;
+                                          } else if (tag.name === 'cat') {
                                                 result = `<span class="cat">${result}</span>`;
-                                          } else if (tag.name === 'eye' && step >= stopStep) {
+                                          } else if (tag.name === 'eye') {
                                                 result = `<span class="eye">${result}</span>`;
                                           }
                                     }
@@ -361,7 +379,7 @@ Todo
                   }
 
                   // Update the simulation state by one step
-                  const evolve = (state) => {
+                  const evolveCells = (state) => {
                         const {cells, numRows, numColumns, step} = state;
                         const cellMap = createCellMap(cells);
 
@@ -442,18 +460,18 @@ Todo
                   }
 
                   // Make the cat's eyes blink
-                  const blinkCat = (timestamp, state) => {
-                        if (timestamp > state.nextFrameTime + INTERVAL_MS) {
-                              state.catEyesOpen = !state.catEyesOpen;
+                  const updateCat = (timestamp, catState) => {
+                        if (timestamp > catState.nextFrameTime + INTERVAL_MS) {
+                              catState.catEyesOpen = !catState.catEyesOpen;
                               const spans = document.querySelectorAll('.eye');
                               for (const span of spans) {
-                                    span.textContent = state.catEyesOpen ? CAT_EYE_OPEN : CAT_EYE_CLOSED;
+                                    span.textContent = catState.catEyesOpen ? CAT_EYE_OPEN : CAT_EYE_CLOSED;
                               }
                               // Sample log-normal wait time
-                              const wait = Math.exp(sampleGaussian()) * (state.catEyesOpen ? 3 : 0.15) * 1000;
-                              state.nextFrameTime = timestamp + wait;
+                              const wait = Math.exp(sampleGaussian()) * (catState.catEyesOpen ? 3 : 0.15) * 1000;
+                              catState.nextFrameTime = timestamp + wait;
                         }
-                        requestAnimationFrame(t => blinkCat(t, state));
+                        requestAnimationFrame(t => updateCat(t, catState));
                   }
 
                   const onCatHover = () => {
@@ -500,17 +518,16 @@ Todo
                   simulateAndPopulateCellChars(cells, numRows, numColumns, textBlocks);
 
                   // Run and display the simulation
-                  const state = {cells, numRows, numColumns, step: 0, nextFrameTime: 0};
-                  requestAnimationFrame(t => update(t, state));
-                  display(state);
+                  const cellsState = {cells, numRows, numColumns, step: 0, nextFrameTime: 0};
+                  requestAnimationFrame(t => updateCells(t, cellsState));
+                  displayCells(cellsState);
 
-                  requestAnimationFrame(t => blinkCat(t, {catEyesOpen: false, nextFrameTime: 0}));
+                  // State
+                  const catState = {catEyesOpen: false, nextFrameTime: 0};
+                  requestAnimationFrame(t => updateCat(t, catState));
             }
 
-            document.fonts.ready.then(() => {
-                  dance();
-            });
-
+            document.fonts.ready.then(dance);
       </script>
 </body>
 </html>
