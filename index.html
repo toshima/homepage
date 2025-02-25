@@ -1,7 +1,6 @@
 <!--
 Todo
 - Add stuff to readme
-- Clean up markdown parsing. Eg something like [link_twitter]text[/link_twitter] with a separate links mapping.
 - Use two space indent instead of four
 -->
 <!DOCTYPE html>
@@ -53,20 +52,6 @@ Todo
                   const NUM_STEPS = 150; // Number of steps in the animation. Determines how long the animation lasts.
                   const INTERVAL_MS = 60; // Interval between steps in the animation. Determines how fast the characters move.
 
-                  // Select a cat face based on the current time
-                  let CAT_FACE;
-                  const hour = new Date().getHours();
-                  if (10 <= hour && hour <= 11) {
-                        // Morning (10am - 11am)
-                        CAT_FACE = "[cat] /\\_/\\\n( [eye]•[/eye].[eye]-[/eye] )\n   ^  [/cat]";
-                  } else if (12 <= hour || hour <= 1) {
-                        // Day (12pm - 1am)
-                        CAT_FACE = "[cat] /\\_/\\\n( [eye]•[/eye].[eye]•[/eye] )\n   ^  [/cat]";
-                  } else {
-                        // Night (2am - 9am)
-                        CAT_FACE = "[cat] /\\_/\\\n( [eye]-[/eye].[eye]-[/eye] )\n   ^  [/cat]";
-                  }
-
                   // Warning for small displays
                   const SMALL_DISPLAY_WARNING = "[b]it looks like you're on mobile or have a small display. fyi the animation looks best viewed on a computer with a larger display[/b]";
 
@@ -81,6 +66,11 @@ Todo
                         [3, 2, 1, 0], // Vertical reflection
                         [2, 3, 0, 1], // Horizontal and vertical reflections
                   ]
+
+                  let catEyesOpen = true;
+                  const CAT_EYE_OPEN = "•";
+                  const CAT_EYE_CLOSED = "-";
+                  const CAT_EYE_POKED = "0";
 
                   // Website content
                   const CONTENT = [
@@ -144,7 +134,7 @@ Todo
                                 1. use ai for the things it can do (eg i used llms heavily to build this site)
                                 2. use my time doing things it can't do yet (eg building a business)
                         `,
-                        CAT_FACE,
+                        `[cat] /\\_/\\\n( [eye]${CAT_EYE_CLOSED}[/eye].[eye]${CAT_EYE_CLOSED}[/eye] )\n   ^  [/cat]`,
                         `
                               "some things are in our control and others not. things in our control are opinion, pursuit, desire, aversion, and, in a word, whatever are our own actions. things not in our control are body, property, reputation, command, and, in one word, whatever are not our actions." - epictetus
                         `,
@@ -162,50 +152,13 @@ Todo
                   ];
 
                   // Remove leading whitespace from each line
-                  function dedent(text) {
+                  const dedent = (text) => {
                         const lines = text.split('\n');
                         const indentLength = Math.min(...lines.filter(line => line.trim()).map(line => line.match(/^ */)[0].length));
                         return lines.map(line => line.slice(indentLength)).join('\n');
                   }
 
-                  // Take in a string and return an array of characters together with their formatting.
-                  // For example, "[b]h[/b]i" -> [{char: "h", link: null, bold: true}, {char: "i", link: null, bold: false}]
-                  // function parseFormattedCharacters(input) {
-                  //       const chars = [...input]; // This splits correctly for multi-byte characters like emojis
-                  //       const result = [];
-                  //       let i = 0;
-                  //       while (i < chars.length) {
-                  //             if (chars[i] === '[') {
-                  //                   if (chars.slice(i, i + 3).join('') === '[b]') {
-                  //                         const j = chars.indexOf('[', i + 3);
-                  //                         if (j !== -1 && chars.slice(j, j + 4).join('') === '[/b]') {
-                  //                               const boldText = chars.slice(i + 3, j);
-                  //                               for (const char of boldText) {
-                  //                                     result.push({char, link: null, bold: true});
-                  //                               }
-                  //                               i = j + 4; // Skip past "[/b]"
-                  //                               continue;
-                  //                         }
-                  //                   }
-                  //                   const j = chars.indexOf(']', i + 1);
-                  //                   const k = chars.indexOf(')', i + 1);
-                  //                   if (j !== -1 && k !== -1 && chars[j+1] === "(") {
-                  //                         const linkText = chars.slice(i + 1, j).join('');
-                  //                         const linkUrl = chars.slice(j + 2, k).join('');
-                  //                         for (const char of linkText) {
-                  //                               result.push({char, link: linkUrl, bold: false});
-                  //                         }
-                  //                         i = k + 1; // Skip past ")"
-                  //                         continue;
-                  //                   }
-                  //             }
-                  //             result.push({char: chars[i], link: null, bold: false});
-                  //             i++;
-                  //       }
-                  //       return result;
-                  // }
-
-                  function parseTags(text) {
+                  const parseTags = (text) => {
                         const result = [];
                         const activeTags = [];
                         let i = 0;
@@ -312,7 +265,7 @@ Todo
                                           formattedChar: {char: ' ', tags: []},
                                           rowVelocity: sampleGaussian(),
                                           columnVelocity: sampleGaussian(),
-                                          stopStep: sampleUniformInt(0.7 * NUM_STEPS, NUM_STEPS),
+                                          stopStep: sampleUniformInt(0.7 * NUM_STEPS, 0.99 * NUM_STEPS),
                                           row: r,
                                           column: c,
                                     });
@@ -381,9 +334,9 @@ Todo
                                           } else if (tag.name === 'link' && step >= stopStep) {
                                                 result = `<a href="${tag.args[0]}" style="color: inherit; text-decoration: underline;">${result}</a>`;
                                           } else if (tag.name === 'cat' && step >= stopStep) {
-                                                result = `<span onmouseover="onCatHover()" onmouseout="onCatUnhover()">${result}</span>`;
+                                                result = `<span class="cat">${result}</span>`;
                                           } else if (tag.name === 'eye' && step >= stopStep) {
-                                                result = `<span class="cat-eye" data-original="${char}" onmouseover="onCatHover()" onmouseout="onCatUnhover()" data-hover="0">${result}</span>`;
+                                                result = `<span class="eye">${result}</span>`;
                                           }
                                     }
                                     return result;
@@ -391,6 +344,13 @@ Todo
                         }
                         const container = document.getElementById('container');
                         container.innerHTML = lines.join('\n');
+
+                        // Add event listeners
+                        const elements = [...document.getElementsByClassName('cat'), ...document.getElementsByClassName('eye')];
+                        for (const element of elements) {
+                              element.addEventListener('mouseover', onCatHover);
+                              element.addEventListener('mouseout', onCatUnhover);
+                        }
                   }
 
                   // Update the simulation state by one step
@@ -471,6 +431,33 @@ Todo
                         return r * Math.cos(theta);
                   }
 
+                  // Make the cat's eyes blink
+                  const blinkCat = () => {
+                        catEyesOpen = !catEyesOpen;
+                        const spans = document.querySelectorAll('.eye');
+                        spans.forEach(span => {
+                              span.textContent = catEyesOpen ? CAT_EYE_OPEN : CAT_EYE_CLOSED;
+                        });
+
+                        // Sample log-normal wait time
+                        const wait = Math.exp(sampleGaussian()) * (catEyesOpen ? 3 : 0.15);
+                        setTimeout(blinkCat, wait * 1000);
+                  }
+
+                  const onCatHover = () => {
+                        const spans = document.querySelectorAll('.eye');
+                        spans.forEach(span => {
+                              span.textContent = CAT_EYE_POKED;
+                        });
+                  }
+
+                  const onCatUnhover = () => {
+                        const spans = document.querySelectorAll('.eye');
+                        spans.forEach(span => {
+                              span.textContent = CAT_EYE_OPEN;
+                        });
+                  }
+
                   // Sample and set a random background color
                   document.body.style.backgroundColor = sampleBackgroundColor();
 
@@ -505,25 +492,12 @@ Todo
                   const intervalId = setInterval(() => update(state), INTERVAL_MS);
                   display(state);
 
+                  blinkCat();
             }
 
             document.fonts.ready.then(() => {
                   dance();
             });
-
-            const onCatHover = () => {
-                  const spans = document.querySelectorAll('.cat-eye');
-                  spans.forEach(span => {
-                        span.textContent = span.getAttribute('data-hover');
-                  });
-            }
-
-            const onCatUnhover = () => {
-                  const spans = document.querySelectorAll('.cat-eye');
-                  spans.forEach(span => {
-                        span.textContent = span.getAttribute('data-original');
-                  });
-            }
 
       </script>
 </body>
