@@ -1,6 +1,5 @@
 <!--
 Todo
-- Add stuff to readme
 - Use two space indent instead of four
 -->
 <!DOCTYPE html>
@@ -8,6 +7,7 @@ Todo
 <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="description" content="takaki oshima's homepage">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap">
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap">
@@ -91,24 +91,6 @@ Todo
                         //       / [reload]reload this page[/reload] /
                         // `,
                         `
-                              books
-                              ~~~~~
-                              below are my favourite books or books which have influenced me in some way. in no particular order.
-                                - [i]what i talk about when i talk about running[/i] by haruki murakami (this book got me into running)
-                                - [link https://www.uncannymagazine.com/article/folding-beijing-2/][i]folding beijing[/i][/link] by hao jingfang
-                                - [i]siddhartha[/i] by hermann hesse
-                                - [i]the three body problem[/i] series by liu cixin
-                                - [i]the almanack of naval ravikant[/i] by eric jorgenson
-                                - [i]the dispossessed[/i] by ursula k. le guin
-                                - [i]why we sleep[/i] by matthew walker (scared me into trying to sleep better)
-                                - [i]the life-changing magic of tidying up[/i] by marie kondo (made me more into a minimalist)
-                        `,
-                        `
-                              tea
-                              ~~~
-                              i like tea especially [i]peppermint[/i] and [i]ali shan[/i].
-                        `,
-                        `
                               about this website
                               ~~~~~~~~~~~~~~~~~~
                               i'd been meaning to make a personal website for a while but never got round to it because i didn't really have a need for one. actually, i still don't have a need for one but i did have an itch to build something and an idea i wanted to try out so i made this in february 2025.
@@ -125,11 +107,29 @@ Todo
                         //       at the start, each text character is given a random mass and velocity and its movement is governed by a bunch of simple rules. a character with a lot of mass is more likely to move in the direction it wants in a straight line. each frame, every character moves exactly one step - characters aren't allowed to teleport or stay still (until they reach their final position). these steps are also deterministic so can be run backwards to figure out where the characters should start in order to end up in the right positions.
                         // `,
                         `
+                              books
+                              ~~~~~
+                              below are my favourite books or books which have influenced me in some way. in no particular order.
+                                - [i]what i talk about when i talk about running[/i] by haruki murakami (this book got me into running)
+                                - [link https://www.uncannymagazine.com/article/folding-beijing-2/][i]folding beijing[/i][/link] by hao jingfang
+                                - [i]siddhartha[/i] by hermann hesse
+                                - [i]the three body problem[/i] series by liu cixin
+                                - [i]the almanack of naval ravikant[/i] by eric jorgenson
+                                - [i]the dispossessed[/i] by ursula k. le guin
+                                - [i]why we sleep[/i] by matthew walker (scared me into trying to sleep better)
+                                - [i]the life-changing magic of tidying up[/i] by marie kondo (made me more into a minimalist)
+                        `,
+                        `
+                              tea
+                              ~~~
+                              i like tea especially peppermint and ali shan.
+                        `,
+                        `
                               source code
                               ~~~~~~~~~~~
-                              the source code for this website can be found [link https://github.com/toshima/homepage]here[/link].
+                              the source code for this website can be found [link https://github.com/toshima/homepage]here[/link] for those interested.
 
-                              the code is pretty concise and should be reasonably readable. i'm not a js main though so it's not written in a particularly idiomatic way.
+                              it should be pretty concise and readable. i'm not a js main though so it's not written in a particularly idiomatic way.
                         `,
                         `
                               misc thoughts
@@ -157,7 +157,7 @@ Todo
                         `
                               privacy policy
                               ~~~~~~~~~~~~~~
-                              this site does not collect any data.
+                              this site does not collect any data. 👍
                         `,
                         `
                               this site was last updated [i]february 2025[/i]
@@ -462,10 +462,12 @@ Todo
                   // Make the cat's eyes blink
                   const updateCat = (timestamp, catState) => {
                         if (timestamp > catState.nextFrameTime + INTERVAL_MS) {
-                              catState.catEyesOpen = !catState.catEyesOpen;
-                              const spans = document.querySelectorAll('.eye');
-                              for (const span of spans) {
-                                    span.textContent = catState.catEyesOpen ? CAT_EYE_OPEN : CAT_EYE_CLOSED;
+                              if (!catState.isHover) {
+                                    catState.catEyesOpen = !catState.catEyesOpen;
+                                    const spans = document.querySelectorAll('.eye');
+                                    for (const span of spans) {
+                                          span.textContent = catState.catEyesOpen ? CAT_EYE_OPEN : CAT_EYE_CLOSED;
+                                    }
                               }
                               // Sample log-normal wait time
                               const wait = Math.exp(sampleGaussian()) * (catState.catEyesOpen ? 3 : 0.15) * 1000;
@@ -479,6 +481,7 @@ Todo
                         spans.forEach(span => {
                               span.textContent = CAT_EYE_POKED;
                         });
+                        catState.isHover = true;
                   }
 
                   const onCatUnhover = () => {
@@ -486,6 +489,7 @@ Todo
                         spans.forEach(span => {
                               span.textContent = CAT_EYE_OPEN;
                         });
+                        catState.isHover = false;
                   }
 
                   // Sample and set a random background color
@@ -523,7 +527,7 @@ Todo
                   displayCells(cellsState);
 
                   // State
-                  const catState = {catEyesOpen: false, nextFrameTime: 0};
+                  const catState = {catEyesOpen: false, nextFrameTime: 0, isHover: false};
                   requestAnimationFrame(t => updateCat(t, catState));
             }
 
