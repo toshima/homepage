@@ -167,32 +167,36 @@
         return lines.map(line => line.slice(indentLength)).join('\n');
       }
 
+      // Convert a string into an array of formatted characters. Each formatted character contains a single
+      // character and a list of tags like "b" or "link https://www.google.com/".
       const parseTags = (text) => {
         const result = [];
         const activeTags = [];
         let i = 0;
-        while (i < text.length) {
-          const j = text.indexOf(']', i);
-          if (text.slice(i, i + 1) === '[' && j !== -1) {
-            if (text.slice(i, i + 2) === '[/') {
-              // Closing tag: [/tag]
-              const tag = text.slice(i + 2, j);
-              const index = activeTags.findIndex(t => t.name === tag);
-              if (index !== -1) {
-                activeTags.splice(index, 1);
+        const chars = [...text]; // Split by unicode code points
+        while (i < chars.length) {
+          if (chars[i] === '[') {
+            const j = chars.indexOf(']', i);
+            if (j !== -1) {
+              const tag = chars.slice(i + 1, j).join('');
+              if (tag[0] === '/') {
+                // Closing tag: [/tag]
+                const index = activeTags.findIndex(t => t.name === tag.slice(1));
+                if (index !== -1) {
+                  activeTags.splice(index, 1);
+                }
+              } else {
+                // Opening tag: [tag arg1 arg2]
+                const words = tag.split(/\s+/);
+                activeTags.push({name: words[0], args: words.slice(1)});
               }
-            } else {
-              // Opening tag: [tag arg1 arg2]
-              const tagContent = text.slice(i + 1, j);
-              const parts = tagContent.split(/\s+/);
-              activeTags.push({name: parts[0], args: parts.slice(1)});
+              i = j + 1;
+              continue;
             }
-            i = j + 1;
-          } else {
-            // Regular character
-            result.push({char: text[i], tags: [...activeTags]});
-            i++;
           }
+          // Regular character
+          result.push({char: chars[i], tags: [...activeTags]});
+          i++;
         }
         return result;
       }
@@ -202,27 +206,17 @@
       const wrapText = (formattedChars, width) => {
         const lines = [];
         let line = [];
-        let lastSpaceIdx = -1;
         for (const fc of formattedChars) {
           if (fc.char === '\n') {
             lines.push(line);
             line = [];
-            lastSpaceIdx = -1;
             continue;
           }
           line.push(fc);
-          if (fc.char === ' ') {
-            lastSpaceIdx = line.length - 1;
-          }
-          if (line.length >= width) {
-            if (lastSpaceIdx >= 0) {
-              lines.push(line.slice(0, lastSpaceIdx));
-              line = line.slice(lastSpaceIdx + 1);
-            } else {
-              lines.push(line);
-              line = [];
-              lastSpaceIdx = -1;
-            }
+          if (line.length > width) {
+            const i = line.findLastIndex(fc => fc.char === ' ');
+            lines.push(i >= 0 ? line.slice(0, i) : line);
+            line = i >= 0 ? line.slice(i + 1) : [];
           }
         }
         if (line.length) {
