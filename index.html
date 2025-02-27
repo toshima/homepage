@@ -225,27 +225,48 @@
         return lines;
       };
 
-      const updateTextBlockPositions = (rectangles, numColumns) => {
+      // Use a brute force approach to place the text blocks in the container
+      // such that they don't overlap. It sets a `startRow` and `startColumn`
+      // for each block which is the position of its top left corner.
+      const updateTextBlockPositions = (textBlocks, numColumns) => {
         // Calculate the margins in terms of the number of columns
         const ms = Math.max(1, Math.floor(MARGIN_SIDE * numColumns));
         const mt = Math.max(1, Math.floor(MARGIN_TOP * numColumns));
 
-        for (const [i, rectangle] of rectangles.entries()) {
-          const {width, height} = rectangle;
-          for (let row = mt; row < mt + 10_000; row += 1) {
-            const column = sampleUniformInt(ms, numColumns - width - ms);
-            if (!rectangles.slice(0, i).some(r => 
-              column < r.column + r.width + SPACING &&
-              column + width > r.column - SPACING &&
-              row < r.row + r.height + SPACING &&
-              row + height > r.row - SPACING
-            )) {
-              rectangle.row = row;
-              rectangle.column = column;
+        for (const [i, block] of textBlocks.entries()) {
+          const {width, height} = block;
+
+          // For each row, try placing the block in a random column. If it doesn't
+          // overlap with any other block, we're done.
+          for (let r = mt; r < mt + 10_000; r += 1) {
+            const c = sampleUniformInt(ms, numColumns - width - ms);
+            const overlap = textBlocks.slice(0, i).some(b => 
+              c < b.startColumn + b.width + SPACING &&
+              c + width > b.startColumn - SPACING &&
+              r < b.startRow + b.height + SPACING &&
+              r + height > b.startRow - SPACING
+            );
+            if (!overlap) {
+              block.startRow = r;
+              block.startColumn = c;
               break;
             }
           }
         }
+      }
+
+      // Create a text block object from a string which contains an array of lines
+      // and position and size data
+      const createTextBlock = (text, numColumns) => {
+        // Sample a random width
+        const minWidth = text.length > 100 ? 30 : 20;
+        const maxWidth = Math.min(numColumns * (1 - 2 * MARGIN_SIDE), 60);
+        const width = sampleUniformInt(minWidth, maxWidth);
+
+        // Convert string into array of formatted characters and split into lines
+        const formattedChars = parseTags(dedent(text));
+        const lines = wrapText(formattedChars, width);
+        return {lines, width, height: lines.length, startRow: -1, startColumn: -1};
       }
 
       // Get the width of a monospace character in pixels
@@ -257,6 +278,7 @@
       //       return metrics.width;
       // }
 
+      // Generate a list of cells with random velocities and stop steps
       const generateCells = (numRows, numColumns) => {
         const cells = [];
         for (let r = 0; r < numRows; r++) {
@@ -301,7 +323,7 @@
           for (const [r, line] of block.lines.entries()) {
             for (const [c, formattedChar] of line.entries()) {
               // Find the cell that ended up in this position in the simulation
-              const simCell = simulatedCellMap[`${block.row + r},${block.column + c}`];
+              const simCell = simulatedCellMap[`${block.startRow + r},${block.startColumn + c}`];
               if (simCell) {
                 // Update the cell in the simulated cell's initial position
                 const cell = cellMap[`${simCell.initialRow},${simCell.initialColumn}`];
@@ -313,28 +335,29 @@
       }
 
       // Update the container with multiple lines of random text
-      const updateCells = (timestamp, state) => {
-        if (state.step >= NUM_STEPS) {
+      const updateCells = (timestamp, {cellsState, catState}) => {
+        // After `NUM_STEPS` steps, stop the animation by not calling `requestAnimationFrame`
+        if (cellsState.step >= NUM_STEPS) {
           return;
         }
-        if (state.nextFrameTime === null || timestamp > state.nextFrameTime) {
-          evolveCells(state);
-          displayCells(state);
-          state.step += 1;
-          state.nextFrameTime = timestamp + INTERVAL_MS;
+        if (timestamp > cellsState.nextFrameTime) {
+          evolveCells(cellsState);
+          displayCells({cellsState, catState});
+          cellsState.step += 1;
+          cellsState.nextFrameTime = timestamp + INTERVAL_MS;
         }
-        requestAnimationFrame((t) => updateCells(t, state));
+        requestAnimationFrame((t) => updateCells(t, {cellsState, catState}));
       }
 
       // Update the webpage with the current state of the simulation
-      const displayCells = ({cells, step}) => {
+      const displayCells = ({cellsState: {cells, step}, catState}) => {
         let lines = [];
         for (let r = 0; r < numRows; r++) {
           const rowCells = cells.filter(cell => cell.row === r).sort((a, b) => a.column - b.column);
           lines.push(rowCells.map(({formattedChar: {char, tags}, stopStep}) => {
             let result = char;
-            for (const tag of tags) {
-              if (tag.name === 'b') {
+            for (const {name, args} of tags) {
+              if (name === 'b') {
                 result = `<strong>${result}</strong>`;
               }
               // Only create tags near the end of the animation otherwise it slows it down.
@@ -342,15 +365,15 @@
               if (step < Math.floor(stopStep * 0.9)) {
                 continue;
               }
-              if (tag.name === 'i') {
+              if (name === 'i') {
                 result = `<em>${result}</em>`;
-              } else if (tag.name === 'link') {
-                result = `<a href="${tag.args[0]}" target="_blank" style="color: inherit; text-decoration: underline;">${result}</a>`;
-              } else if (tag.name === 'reload') {
+              } else if (name === 'link') {
+                result = `<a href="${args[0]}" target="_blank" style="color: inherit; text-decoration: underline;">${result}</a>`;
+              } else if (name === 'reload') {
                 result = `<a href="#" onclick="location.reload(); return false;" style="color: inherit; text-decoration: underline;">${result}</a>`;
-              } else if (tag.name === 'cat') {
+              } else if (name === 'cat') {
                 result = `<span class="cat">${result}</span>`;
-              } else if (tag.name === 'eye') {
+              } else if (name === 'eye') {
                 result = `<span class="eye">${result}</span>`;
               }
             }
@@ -363,8 +386,8 @@
         // Add event listeners
         const spans = [...document.querySelectorAll('.cat'), ...document.querySelectorAll('.eye')];
         for (const span of spans) {
-          span.addEventListener('mouseover', onCatHover);
-          span.addEventListener('mouseout', onCatUnhover);
+          span.addEventListener('mouseover', () => onCatHover({catState}));
+          span.addEventListener('mouseout', () => onCatUnhover({catState}));
         }
       }
 
@@ -403,6 +426,7 @@
         }
       }
 
+      // Calculate the momentum of a group of cells under a given transform
       const calcMomentum = (group, transform) => {
         let score = 0;
         for (const [i, cell] of group.entries()) {
@@ -415,12 +439,46 @@
       }
 
       // Create a map to look up cells by their row and column for efficient lookup
-      const createCellMap = (cells) => {
+      const createCellMap = cells => {
         const cellMap = {};
         cells.forEach(cell => {
           cellMap[`${cell.row},${cell.column}`] = cell;
         });
         return cellMap;
+      }
+
+      // Make the cat's eyes blink
+      const updateCat = (timestamp, catState) => {
+        if (timestamp > catState.nextFrameTime + INTERVAL_MS) {
+          if (!catState.isHover) {
+            catState.catEyesOpen = !catState.catEyesOpen;
+            const eye = catState.catEyesOpen ? CAT_EYE_OPEN : CAT_EYE_CLOSED;
+            const spans = document.querySelectorAll('.eye');
+            spans.forEach(span => {
+              span.textContent = eye;
+            });
+          }
+          // Wait a random log-normally distributed length of time
+          const wait = Math.exp(sampleGaussian()) * (catState.catEyesOpen ? 3 : 0.15) * 1000;
+          catState.nextFrameTime = timestamp + wait;
+        }
+        requestAnimationFrame(t => updateCat(t, catState));
+      }
+
+      const onCatHover = catState => {
+        const spans = document.querySelectorAll('.eye');
+        spans.forEach(span => {
+          span.textContent = CAT_EYE_POKED;
+        });
+        catState.isHover = true;
+      }
+
+      const onCatUnhover = catState => {
+        const spans = document.querySelectorAll('.eye');
+        spans.forEach(span => {
+          span.textContent = CAT_EYE_OPEN;
+        });
+        catState.isHover = false;
       }
 
       // Sample a background color close to white
@@ -449,39 +507,6 @@
         return r * Math.cos(theta);
       }
 
-      // Make the cat's eyes blink
-      const updateCat = (timestamp, catState) => {
-        if (timestamp > catState.nextFrameTime + INTERVAL_MS) {
-          if (!catState.isHover) {
-            catState.catEyesOpen = !catState.catEyesOpen;
-            const spans = document.querySelectorAll('.eye');
-            for (const span of spans) {
-              span.textContent = catState.catEyesOpen ? CAT_EYE_OPEN : CAT_EYE_CLOSED;
-            }
-          }
-          // Sample log-normal wait time
-          const wait = Math.exp(sampleGaussian()) * (catState.catEyesOpen ? 3 : 0.15) * 1000;
-          catState.nextFrameTime = timestamp + wait;
-        }
-        requestAnimationFrame(t => updateCat(t, catState));
-      }
-
-      const onCatHover = () => {
-        const spans = document.querySelectorAll('.eye');
-        spans.forEach(span => {
-          span.textContent = CAT_EYE_POKED;
-        });
-        catState.isHover = true;
-      }
-
-      const onCatUnhover = () => {
-        const spans = document.querySelectorAll('.eye');
-        spans.forEach(span => {
-          span.textContent = CAT_EYE_OPEN;
-        });
-        catState.isHover = false;
-      }
-
       // Sample and set a random background color
       document.body.style.backgroundColor = sampleBackgroundColor();
 
@@ -492,33 +517,24 @@
       const minRows = Math.floor(window.innerHeight / CHAR_HEIGHT) - 1;
 
       // Parse the website text and wrap it into lines
-      const textBlocks = CONTENT.map(string => {
-        const text = parseTags(dedent(string));
-        const minWidth = string.length > 100 ? 30 : 20;
-        const maxWidth = Math.min(numColumns * (1 - 2 * MARGIN_SIDE), 60);
-        const width = sampleUniformInt(minWidth, maxWidth);
-        const lines = wrapText(text, width);
-        return {lines, width, height: lines.length}
-      });
+      const textBlocks = CONTENT.map(s => createTextBlock(s, numColumns));
       updateTextBlockPositions(textBlocks, numColumns);
 
       // Calculate the number of rows based on the block positions
       // Ensure the number of rows is even so we can do tilings of 2x2 squares.
-      const maxBlockHeight = Math.max(...textBlocks.map(block => block.row + block.height));
+      const maxBlockHeight = Math.max(...textBlocks.map(b => b.startRow + b.height));
       const numRows = Math.floor(Math.max(minRows, maxBlockHeight + Math.floor(MARGIN_BOTTOM * numColumns)) / 2) * 2;
 
       // Generate the cells and simulate the movement of the characters
       const cells = generateCells(numRows, numColumns);
       simulateAndPopulateCellChars(cells, numRows, numColumns, textBlocks);
 
-      // Run and display the simulation
-      const cellsState = {cells, numRows, numColumns, step: 0, nextFrameTime: 0};
-      requestAnimationFrame(t => updateCells(t, cellsState));
-      displayCells(cellsState);
-
-      // State
       const catState = {catEyesOpen: false, nextFrameTime: 0, isHover: false};
+      const cellsState = {cells, numRows, numColumns, step: 0, nextFrameTime: 0};
+
       requestAnimationFrame(t => updateCat(t, catState));
+      requestAnimationFrame(t => updateCells(t, {catState, cellsState}));
+      displayCells({catState, cellsState});
     }
 
     document.fonts.ready.then(dance);
