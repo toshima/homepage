@@ -163,49 +163,48 @@
       // Remove leading whitespace from each line
       const dedent = (text) => {
         const lines = text.split('\n');
-        const indentLength = Math.min(...lines.filter(line => line.trim()).map(line => line.match(/^ */)[0].length));
+        const nonEmptyLines = lines.filter(line => line.trim());
+        if (!nonEmptyLines.length) return text;
+
+        const indentLength = Math.min(...nonEmptyLines.map(line => line.match(/^ */)[0].length));
         return lines.map(line => line.slice(indentLength)).join('\n');
       }
 
-      // Convert a string into an array of formatted characters. Each formatted character contains a single
-      // character and a list of tags like "b" or "link https://www.google.com/".
+      // Convert a string into an array of formatted characters with tags
       const parseTags = (text) => {
         const result = [];
         const activeTags = [];
-        let i = 0;
         const chars = [...text]; // Split by unicode code points
-        while (i < chars.length) {
-          if (chars[i] === '[') {
+
+        for (let i = 0; i < chars.length; i++) {
+          if (chars[i] === '[' && chars.includes(']', i)) {
             const j = chars.indexOf(']', i);
-            if (j !== -1) {
-              const tag = chars.slice(i + 1, j).join('');
-              if (tag[0] === '/') {
-                // Closing tag: [/tag]
-                const index = activeTags.findIndex(t => t.name === tag.slice(1));
-                if (index !== -1) {
-                  activeTags.splice(index, 1);
-                }
-              } else {
-                // Opening tag: [tag arg1 arg2]
-                const words = tag.split(/\s+/);
-                activeTags.push({name: words[0], args: words.slice(1)});
-              }
-              i = j + 1;
-              continue;
+            const tag = chars.slice(i + 1, j).join('');
+            if (tag[0] === '/') {
+              // Closing tag: [/tag]
+              const tagName = tag.slice(1);
+              const index = activeTags.findIndex(t => t.name === tagName);
+              if (index !== -1) activeTags.splice(index, 1);
+            } else {
+              // Opening tag: [tag arg1 arg2]
+              const [name, ...args] = tag.split(/\s+/);
+              activeTags.push({name, args});
             }
+            i = j;
+            continue;
           }
+
           // Regular character
           result.push({char: chars[i], tags: [...activeTags]});
-          i++;
         }
         return result;
       }
 
-      // Take in an array of formatted characters and return an array of lines,
-      // splitting when the text is too long
+      // Wrap text into lines of maximum width
       const wrapText = (formattedChars, width) => {
         const lines = [];
         let line = [];
+
         for (const fc of formattedChars) {
           if (fc.char === '\n') {
             lines.push(line);
@@ -213,38 +212,39 @@
             continue;
           }
           line.push(fc);
+
           if (line.length > width) {
             const i = line.findLastIndex(fc => fc.char === ' ');
-            lines.push(i >= 0 ? line.slice(0, i) : line);
-            line = i >= 0 ? line.slice(i + 1) : [];
+            if (i >= 0) {
+              lines.push(line.slice(0, i));
+              line = line.slice(i + 1);
+            } else {
+              lines.push(line);
+              line = [];
+            }
           }
         }
-        if (line.length) {
-          lines.push(line);
-        }
+
+        if (line.length) lines.push(line);
         return lines;
       };
 
-      // Use a brute force approach to place the text blocks in the container
-      // such that they don't overlap. It sets a `startRow` and `startColumn`
-      // for each block which is the position of its top left corner.
+      // Position text blocks to avoid overlap
       const updateTextBlockPositions = (textBlocks, numColumns) => {
-        // Calculate the margins in terms of the number of columns
         const ms = Math.max(1, Math.floor(MARGIN_SIDE * numColumns));
         const mt = Math.max(1, Math.floor(MARGIN_TOP * numColumns));
 
-        for (const [i, block] of textBlocks.entries()) {
-          const {width, height} = block;
+        textBlocks.forEach((block, i) => {
+          const prevBlocks = textBlocks.slice(0, i);
+          const maxCol = numColumns - block.width - ms;
 
-          // For each row, try placing the block in a random column. If it doesn't
-          // overlap with any other block, we're done.
-          for (let r = mt; r < mt + 10_000; r += 1) {
-            const c = sampleUniformInt(ms, numColumns - width - ms);
-            const overlap = textBlocks.slice(0, i).some(b => 
+          for (let r = mt; r < mt + 10_000; r++) {
+            const c = sampleUniformInt(ms, maxCol);
+            const overlap = prevBlocks.some(b =>
               c < b.startColumn + b.width + SPACING &&
-              c + width > b.startColumn - SPACING &&
+              c + block.width > b.startColumn - SPACING &&
               r < b.startRow + b.height + SPACING &&
-              r + height > b.startRow - SPACING
+              r + block.height > b.startRow - SPACING
             );
             if (!overlap) {
               block.startRow = r;
@@ -252,21 +252,25 @@
               break;
             }
           }
-        }
+        });
       }
 
-      // Create a text block object from a string which contains an array of lines
-      // and position and size data
+      // Create a text block from string content
       const createTextBlock = (text, numColumns) => {
-        // Sample a random width
         const minWidth = text.length > 100 ? 30 : 20;
         const maxWidth = Math.min(numColumns * (1 - 2 * MARGIN_SIDE), 60);
         const width = sampleUniformInt(minWidth, maxWidth);
 
-        // Convert string into array of formatted characters and split into lines
         const formattedChars = parseTags(dedent(text));
         const lines = wrapText(formattedChars, width);
-        return {lines, width, height: lines.length, startRow: -1, startColumn: -1};
+
+        return {
+          lines,
+          width,
+          height: lines.length,
+          startRow: -1,
+          startColumn: -1,
+        };
       }
 
       // Get the width of a monospace character in pixels
@@ -319,19 +323,25 @@
         const cellMap = createCellMap(cells);
 
         // Populate the cells with the characters from the simulation
-        for (const block of textBlocks) {
-          for (const [r, line] of block.lines.entries()) {
-            for (const [c, formattedChar] of line.entries()) {
-              // Find the cell that ended up in this position in the simulation
-              const simCell = simulatedCellMap[`${block.startRow + r},${block.startColumn + c}`];
+        textBlocks.forEach(block => {
+          block.lines.forEach((line, r) => {
+            line.forEach((formattedChar, c) => {
+              // Calculate the final position in the grid
+              const finalPos = `${block.startRow + r},${block.startColumn + c}`;
+
+              // Find the cell that ended up in this position
+              const simCell = simulatedCellMap[finalPos];
               if (simCell) {
-                // Update the cell in the simulated cell's initial position
-                const cell = cellMap[`${simCell.initialRow},${simCell.initialColumn}`];
+                // Find the original cell by its initial coordinates
+                const initialPos = `${simCell.initialRow},${simCell.initialColumn}`;
+                const cell = cellMap[initialPos];
+
+                // Assign the character to the original cell
                 cell.formattedChar = formattedChar;
               }
-            }
-          }
-        }
+            });
+          });
+        });
       }
 
       // Update the container with multiple lines of random text
@@ -340,83 +350,108 @@
         if (cellsState.step >= NUM_STEPS) {
           return;
         }
+
         if (timestamp > cellsState.nextFrameTime) {
           evolveCells(cellsState);
           displayCells({cellsState, catState});
           cellsState.step += 1;
           cellsState.nextFrameTime = timestamp + INTERVAL_MS;
         }
+
         requestAnimationFrame((t) => updateCells(t, {cellsState, catState}));
       }
 
       // Update the webpage with the current state of the simulation
       const displayCells = ({cellsState: {cells, step}, catState}) => {
-        let lines = [];
-        for (let r = 0; r < numRows; r++) {
-          const rowCells = cells.filter(cell => cell.row === r).sort((a, b) => a.column - b.column);
-          lines.push(rowCells.map(({formattedChar: {char, tags}, stopStep}) => {
-            let result = char;
-            for (const {name, args} of tags) {
-              if (name === 'b') {
-                result = `<strong>${result}</strong>`;
+        // Group cells by row for more efficient processing
+        const cellsByRow = Array(numRows).fill().map(() => []);
+        cells.forEach(cell => cellsByRow[cell.row].push(cell));
+
+        // Format each row
+        const lines = cellsByRow.map(rowCells => {
+          return rowCells
+            .sort((a, b) => a.column - b.column)
+            .map(({formattedChar: {char, tags}, stopStep}) => {
+              // Start with the base character
+              let result = char;
+
+              // Apply formatting based on tags
+              for (const {name, args} of tags) {
+                // Bold is always applied
+                if (name === 'b') {
+                  result = `<strong>${result}</strong>`;
+                }
+
+                // Only create other tags near the end of the animation to avoid slowdown
+                // Bold is an exception as it gives the eye something to track during the animation
+                if (step < Math.floor(stopStep * 0.9)) {
+                  continue;
+                }
+
+                // Apply appropriate HTML tags based on tag name
+                if (name === 'i') {
+                  result = `<em>${result}</em>`;
+                } else if (name === 'link') {
+                  result = `<a href="${args[0]}" target="_blank" style="color: inherit; text-decoration: underline;">${result}</a>`;
+                } else if (name === 'reload') {
+                  result = `<a href="#" onclick="location.reload(); return false;" style="color: inherit; text-decoration: underline;">${result}</a>`;
+                } else if (name === 'cat') {
+                  result = `<span class="cat">${result}</span>`;
+                } else if (name === 'eye') {
+                  result = `<span class="eye">${result}</span>`;
+                }
               }
-              // Only create tags near the end of the animation otherwise it slows it down.
-              // Bold is an exception as it gives the eye something to track during the animation.
-              if (step < Math.floor(stopStep * 0.9)) {
-                continue;
-              }
-              if (name === 'i') {
-                result = `<em>${result}</em>`;
-              } else if (name === 'link') {
-                result = `<a href="${args[0]}" target="_blank" style="color: inherit; text-decoration: underline;">${result}</a>`;
-              } else if (name === 'reload') {
-                result = `<a href="#" onclick="location.reload(); return false;" style="color: inherit; text-decoration: underline;">${result}</a>`;
-              } else if (name === 'cat') {
-                result = `<span class="cat">${result}</span>`;
-              } else if (name === 'eye') {
-                result = `<span class="eye">${result}</span>`;
-              }
-            }
-            return result;
-          }).join(''));
-        }
+
+              return result;
+            })
+            .join('');
+        });
+
+        // Update DOM
         const container = document.getElementById('container');
         container.innerHTML = lines.join('\n');
 
-        // Add event listeners
+        // Add event listeners for cat interaction
         const spans = [...document.querySelectorAll('.cat'), ...document.querySelectorAll('.eye')];
-        for (const span of spans) {
+        spans.forEach(span => {
           span.addEventListener('mouseover', () => onCatHover({catState}));
           span.addEventListener('mouseout', () => onCatUnhover({catState}));
-        }
+        });
       }
 
       // Update the simulation state by one step
       const evolveCells = (state) => {
         const {cells, numRows, numColumns, step} = state;
         const cellMap = createCellMap(cells);
+        const offset = step % 2;  // Alternate starting position
 
         // We look at tilings of 2x2 squares of cells, alternating between starting at (0, 0) and (1, 1)
-        for (let r = step % 2; r < numRows; r += 2) {
-          for (let c = step % 2; c < numColumns; c += 2) {
-            // 2x2 square of cells
-            const group = [
-              cellMap[`${r},${c}`],
-              cellMap[`${r},${(c + 1) % numColumns}`],
-              cellMap[`${(r + 1) % numRows},${(c + 1) % numColumns}`],
-              cellMap[`${(r + 1) % numRows},${c}`],
+        for (let r = offset; r < numRows; r += 2) {
+          for (let c = offset; c < numColumns; c += 2) {
+            // Define the 2x2 square cell coordinates
+            const cellCoords = [
+              [r, c],
+              [r, (c + 1) % numColumns],
+              [(r + 1) % numRows, (c + 1) % numColumns],
+              [(r + 1) % numRows, c]
             ];
+
+            // Get the actual cells from coordinates
+            const group = cellCoords.map(([row, col]) => cellMap[`${row},${col}`]);
 
             // Ignore this 2x2 group if `stopStep` has been reached for any of the characters
             if (group.some(({stopStep}) => step >= stopStep)) {
               continue;
             }
 
-            // Calculate which transform maximizes momentum
-            const [bestTransform, _] = TRANSFORMS.map(t => [t, calcMomentum(group, t)]).reduce((a, b) => b[1] > a[1] ? b : a);
+            // Calculate which transform maximizes momentum (keep the reduce)
+            const [bestTransform, _] = TRANSFORMS.map(t => [t, calcMomentum(group, t)])
+              .reduce((a, b) => b[1] > a[1] ? b : a);
+
+            // Store original positions
+            const groupCopy = group.map(({row, column}) => ({row, column}));
 
             // Apply the best transform
-            const groupCopy = group.map(({row, column}) => ({row, column}));
             for (const [i, cell] of group.entries()) {
               const dest = groupCopy[bestTransform[i]];
               cell.row = dest.row;
@@ -442,7 +477,8 @@
       const createCellMap = cells => {
         const cellMap = {};
         cells.forEach(cell => {
-          cellMap[`${cell.row},${cell.column}`] = cell;
+          const key = `${cell.row},${cell.column}`;
+          cellMap[key] = cell;
         });
         return cellMap;
       }
@@ -450,21 +486,29 @@
       // Make the cat's eyes blink
       const updateCat = (timestamp, catState) => {
         if (timestamp > catState.nextFrameTime + INTERVAL_MS) {
+          // Only change eye state if not being hovered
           if (!catState.isHover) {
             catState.catEyesOpen = !catState.catEyesOpen;
             const eye = catState.catEyesOpen ? CAT_EYE_OPEN : CAT_EYE_CLOSED;
+
+            // Update all eye elements
             const spans = document.querySelectorAll('.eye');
             spans.forEach(span => {
               span.textContent = eye;
             });
           }
+
           // Wait a random log-normally distributed length of time
-          const wait = Math.exp(sampleGaussian()) * (catState.catEyesOpen ? 3 : 0.15) * 1000;
+          // Eyes stay open longer than they stay closed
+          const waitMultiplier = catState.catEyesOpen ? 3 : 0.15;
+          const wait = Math.exp(sampleGaussian()) * waitMultiplier * 1000;
           catState.nextFrameTime = timestamp + wait;
         }
+
         requestAnimationFrame(t => updateCat(t, catState));
       }
 
+      // Handle mouse hover on cat
       const onCatHover = catState => {
         const spans = document.querySelectorAll('.eye');
         spans.forEach(span => {
@@ -473,6 +517,7 @@
         catState.isHover = true;
       }
 
+      // Handle mouse leaving cat
       const onCatUnhover = catState => {
         const spans = document.querySelectorAll('.eye');
         spans.forEach(span => {
@@ -489,18 +534,14 @@
         return `rgb(${r}, ${g}, ${b})`;
       }
 
-      const sampleUniform = (min, max) => {
-        return min + Math.random() * (max - min);
-      }
+      // Random sampling functions
+      const sampleUniform = (min, max) => min + Math.random() * (max - min);
 
-      const sampleUniformInt = (min, max) => {
-        return Math.floor(sampleUniform(min, max + 1));
-      }
+      const sampleUniformInt = (min, max) => Math.floor(sampleUniform(min, max + 1));
 
-      const sampleExponential = (lambda) => {
-        return -Math.log(Math.random()) / lambda;
-      }
+      const sampleExponential = lambda => -Math.log(Math.random()) / lambda;
 
+      // Box-Muller transform for sampling from a Gaussian distribution
       const sampleGaussian = () => {
         const r = Math.sqrt(sampleExponential(2));
         const theta = 2 * Math.PI * Math.random();
@@ -529,6 +570,7 @@
       const cells = generateCells(numRows, numColumns);
       simulateAndPopulateCellChars(cells, numRows, numColumns, textBlocks);
 
+      // Mutable animation state
       const catState = {catEyesOpen: false, nextFrameTime: 0, isHover: false};
       const cellsState = {cells, numRows, numColumns, step: 0, nextFrameTime: 0};
 
