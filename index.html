@@ -25,7 +25,7 @@
       padding: 0;
       min-height: 100vh;
       overflow: auto;
-      line-height: 1.3;
+      line-height: 1.35;
       letter-spacing: 0;
       white-space: pre;
     }
@@ -38,13 +38,13 @@
       // Update these if font size or font family changes.
       // Couldn't find a reliable way to calculate them on-the-fly.
       const CHAR_WIDTH = 15 * 0.6;
-      const CHAR_HEIGHT = 15 * 1.3;
+      const CHAR_HEIGHT = 15 * 1.35;
 
       // Settings
       const SPACING = 3; // Minimum number of spaces between text blocks
       const MARGIN_TOP = 0.03; // Margin at top of page
       const MARGIN_BOTTOM = 0.02; // Margin at bottom of page
-      const MARGIN_SIDE = 0.1; // Margin on each side of page
+      const MARGIN_SIDE = 0.05; // Margin on each side of page
       const NUM_STEPS = 200; // Number of steps in the animation. Determines how long the animation lasts.
       const INTERVAL_MS = 30; // Interval between steps in the animation. Determines how fast the characters move.
 
@@ -83,9 +83,6 @@
 
           in the past i worked as a swe at [link https://google.com/]google[/link] and as a quant trader at an hft firm. i later cofounded a startup where i researched and built decentralized protocols.
         `,
-        // `
-        //   / [reload]reload this page[/reload] /
-        // `,
         `
           about this website
           ~~~~~~~~~~~~~~~~~~
@@ -122,10 +119,8 @@
         `,
         `
           source code
-          ~~~~~~~~~~~
-          the source code for this website can be found [link https://github.com/toshima/homepage]here[/link] for those interested.
-
-          it should be pretty concise and readable. i'm not a js main though so it's not written in a particularly idiomatic way.
+          ~~~~~~~~~~
+          the source code for this website can be found [link https://github.com/toshima/homepage]here[/link].
         `,
         `
           misc thoughts
@@ -135,6 +130,8 @@
             2. use my time doing things it can't do yet (eg building a business)
         `,
         `
+          cat
+          ~~~
           [cat] /\\_/\\
           ( [eye]${CAT_EYE_CLOSED}[/eye].[eye]${CAT_EYE_CLOSED}[/eye] )
              ^  [/cat]
@@ -156,7 +153,7 @@
           this site does not collect any data. 👍
         `,
         `
-          this site was last updated [i]february 2025[/i]
+          this site was last updated [i]march 2025[/i]
         `,
       ];
 
@@ -273,15 +270,6 @@
         };
       }
 
-      // Get the width of a monospace character in pixels
-      // const getMonospaceWidth = (fontSize, fontFamily) => {
-      //       const canvas = document.createElement('canvas');
-      //       const context = canvas.getContext('2d');
-      //       context.font = `${fontSize}px "${fontFamily}"`;
-      //       const metrics = context.measureText('M');
-      //       return metrics.width;
-      // }
-
       // Generate a list of cells with random velocities and stop steps
       const generateCells = (numRows, numColumns) => {
         const cells = [];
@@ -393,8 +381,6 @@
                   result = `<em>${result}</em>`;
                 } else if (name === 'link') {
                   result = `<a href="${args[0]}" target="_blank" style="color: inherit; text-decoration: underline;">${result}</a>`;
-                } else if (name === 'reload') {
-                  result = `<a href="#" onclick="location.reload(); return false;" style="color: inherit; text-decoration: underline;">${result}</a>`;
                 } else if (name === 'cat') {
                   result = `<span class="cat">${result}</span>`;
                 } else if (name === 'eye') {
