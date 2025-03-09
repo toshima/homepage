@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="takaki oshima's homepage">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap">
+  <title>takaki oshima's homepage</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Source Code Pro', monospace;
+      font-size: 16px;
+      background: #ffffff;
+      color: #222222;
+    }
+    #container {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      overflow: auto;
+      line-height: 1.35;
+      letter-spacing: 0;
+      white-space: pre;
+    }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+  <script>
+    const dance = () => {
+      // Update these if font size or font family changes.
+      // Couldn't find a reliable way to calculate them on-the-fly.
+      const CHAR_WIDTH = 16 * 0.6;
+      const CHAR_HEIGHT = 16 * 1.35;
+
+      // Settings
+      const SPACING = 3; // Minimum number of spaces between text blocks
+      const MARGIN_TOP = 0.03; // Margin at top of page
+      const MARGIN_BOTTOM = 0.02; // Margin at bottom of page
+      const MARGIN_SIDE = 0.05; // Margin on each side of page
+      const NUM_STEPS = 200; // Number of steps in the animation. Determines how long the animation lasts.
+      const INTERVAL_MS = 30; // Interval between steps in the animation. Determines how fast the characters move.
+
+      // Website content
+      const CONTENT = `
+        Welcome to the personal homepage of [b]Takaki Oshima[/b].
+
+        [b]Work[/b]
+
+        I'm an independent researcher. My interests span a bunch of domains including
+          - AI
+          - Automated market making protocols
+          - Quantitative sports betting
+          - Creative coding
+
+        In the past I worked as a SWE at [link https://google.com/]Google[/link] and as a quant trader at an HFT firm. I later cofounded a startup where I researched and built decentralized protocols.
+
+        [b]About this website[/b]
+
+        This site is best viewed on a large display. It uses my favourite coding font, [link https://adobe-fonts.github.io/source-code-pro/]source code pro[/link].
+
+        It takes inspiration from the work of generative artists like [link https://ertdfgcvb.xyz/]Andreas Gysin[/link] and more generally from the field of creative coding such as [link https://kimasendorf.com/]Kim Asendorf[/link]'s [link https://github.com/kimasendorf/ASDFPixelSort]pixel sorting algorithm[/link].
+
+        The source code for this website can be found [link https://github.com/toshima/homepage]here[/link].
+      `;
+
+      // Remove leading whitespace from each line
+      const dedent = (text) => {
+        const lines = text.split('\n');
+        const nonEmptyLines = lines.filter(line => line.trim());
+        if (!nonEmptyLines.length) return text;
+
+        const indentLength = Math.min(...nonEmptyLines.map(line => line.match(/^ */)[0].length));
+        return lines.map(line => line.slice(indentLength)).join('\n');
+      }
+
+      // Convert a string into an array of formatted characters with tags
+      const parseTags = (text) => {
+        const result = [];
+        const activeTags = [];
+        const chars = [...text]; // Split by unicode code points
+
+        for (let i = 0; i < chars.length; i++) {
+          if (chars[i] === '[' && chars.includes(']', i)) {
+            const j = chars.indexOf(']', i);
+            const tag = chars.slice(i + 1, j).join('');
+            if (tag[0] === '/') {
+              // Closing tag: [/tag]
+              const tagName = tag.slice(1);
+              const index = activeTags.findIndex(t => t.name === tagName);
+              if (index !== -1) activeTags.splice(index, 1);
+            } else {
+              // Opening tag: [tag arg1 arg2]
+              const [name, ...args] = tag.split(/\s+/);
+              activeTags.push({name, args});
+            }
+            i = j;
+            continue;
+          }
+
+          // Regular character
+          result.push({index: i, char: chars[i], tags: [...activeTags]});
+        }
+
+        for (let i = 0; i < result.length; i++) {
+          result[i].pursuitIndex = result[(i + 1) % result.length].index;
+        }
+        return result;
+      }
+
+      // Wrap text into lines of maximum width
+      const wrapText = (formattedChars, width) => {
+        const lines = [];
+        let line = [];
+
+        for (const fc of formattedChars) {
+          if (fc.char === '\n') {
+            lines.push(line);
+            line = [];
+            continue;
+          }
+          line.push(fc);
+
+          if (line.length > width) {
+            const i = line.findLastIndex(fc => fc.char === ' ');
+            if (i >= 0) {
+              lines.push(line.slice(0, i));
+              line = line.slice(i + 1);
+            } else {
+              lines.push(line);
+              line = [];
+            }
+          }
+        }
+
+        if (line.length) lines.push(line);
+
+        for (let r = 0; r < lines.length; r++) {
+          for (let c = 0; c < lines[r].length; c++) {
+            const char = lines[r][c];
+            char.targetRow = r;
+            char.targetColumn = c;
+          }
+        }
+
+        // TODO: Find better way to do this
+        return formattedChars.filter(fc => fc.targetRow !== undefined && fc.targetColumn !== undefined);
+      };
+
+      const createElements = (chars) => {
+        const container = document.getElementById('container');
+        for (const char of chars) {
+          const span = document.createElement('span');
+          span.textContent = char.char;
+          span.id = `char-${char.index}`;
+          span.style.position = 'absolute';
+          span.style.top = `${char.row * CHAR_HEIGHT}px`;
+          span.style.left = `${char.column * CHAR_WIDTH}px`; 
+          container.appendChild(span);
+        }
+      }
+
+      const animate = (t, {frame, nextFrameTime, chars}) => {
+        const t0 = performance.now();
+        if (t > nextFrameTime) {
+          updateMouseVelocity();
+          evolveChars({frame, chars});
+          updateCharPositions(chars);
+          nextFrameTime = t + INTERVAL_MS;
+          console.log(`Time taken: ${(performance.now() - t0).toFixed(2)}ms`);
+        }
+        requestAnimationFrame(t => animate(t, {frame: frame + 1, nextFrameTime, chars}));
+      }
+
+      const updateMouseVelocity = () => {
+        mouseVelocityX *= 0.9;
+        mouseVelocityY *= 0.9;
+        mouseVelocityX += mouseX - mousePrevX;
+        mouseVelocityY += mouseY - mousePrevY;
+        mousePrevX = mouseX;
+        mousePrevY = mouseY;
+      }
+
+      const updateCharPositions = (chars) => {
+        const container = document.getElementById('container');
+        for (const char of chars) {
+          const span = document.getElementById(`char-${char.index}`);
+          span.style.top = `${char.row * CHAR_HEIGHT}px`;
+          span.style.left = `${char.column * CHAR_WIDTH}px`;
+        }
+      }
+
+      const evolveChars = ({frame, chars}) => {
+        for (const char of chars) {
+          if (char.prevColumn === undefined) {
+            char.prevColumn = char.column;
+          }
+          if (char.prevRow === undefined) {
+            char.prevRow = char.row;
+          }
+
+          const targetWeight = 0.01 * Math.min(frame / 1000, 1);
+          const moveWeight = 0.04 * (1 - Math.min(frame / 1000, 1));
+
+          // Calculate forces as before
+          let deltaX = 0;
+          let deltaY = 0;
+
+          // Add pull towards pursuit cell
+          const target = chars.find(c => c.index === char.pursuitIndex);
+          if (target) {
+            deltaX += moveWeight * (target.column - char.column);
+            deltaY += moveWeight * (target.row - char.row);
+          }
+
+          // Add gravity towards final position
+          deltaX += targetWeight * (char.targetColumn - char.column);
+          deltaY += targetWeight * (char.targetRow - char.row);
+
+          // Add momentum
+          deltaX += moveWeight * (char.column - char.prevColumn);
+          deltaY += moveWeight * (char.row - char.prevRow);
+
+          // Add fluid dynamics
+          for (const other of chars) {
+            if (other === char) continue;
+            const dx = other.column - char.column;
+            const dy = other.row - char.row;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 3) { // Only affect nearby characters
+              const force = -0.05 * (1 - dist/3); // Stronger force when closer
+              deltaX += moveWeight * force * dx;
+              deltaY += moveWeight * force * dy;
+            }
+          }
+
+          // Add mouse influence
+          const dx = mouseX / CHAR_WIDTH - char.column;
+          const dy = mouseY / CHAR_HEIGHT - char.row;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 10) { // Only affect characters within range
+            const force = 2 * (1 - dist/10); // Stronger force when closer
+            deltaX += moveWeight * mouseVelocityX; 
+            deltaY += moveWeight * mouseVelocityY;
+          }
+
+          // Restrict movement to 4 cardinal directions (N, E, S, W)
+          if (deltaX !== 0 || deltaY !== 0) {
+            // Calculate the angle of movement
+            const angle = Math.atan2(deltaY, deltaX);
+            
+            // Round to nearest 90 degrees (4 cardinal directions)
+            const snapAngle = Math.round(angle / (Math.PI / 2)) * (Math.PI / 2);
+            
+            // Calculate the magnitude of movement
+            const magnitude = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            // Convert back to x,y coordinates in cardinal directions
+            const newDeltaX = magnitude * Math.cos(snapAngle);
+            const newDeltaY = magnitude * Math.sin(snapAngle);
+            
+            // Apply the adjusted movement
+            char.column += newDeltaX;
+            char.row += newDeltaY;
+          }
+          // char.column += deltaX;
+          // char.row += deltaY;
+
+          // Store current position for next frame's momentum calculation
+          char.prevColumn = char.column;
+          char.prevRow = char.row;
+        }
+      }
+
+      // Update the container with multiple lines of random text
+      // const updateCells = (timestamp, {cellsState, catState}) => {
+      //   // After `NUM_STEPS` steps, stop the animation by not calling `requestAnimationFrame`
+      //   if (cellsState.step >= NUM_STEPS) {
+      //     return;
+      //   }
+
+      //   if (timestamp > cellsState.nextFrameTime) {
+      //     evolveCells(cellsState);
+      //     displayCells({cellsState, catState});
+      //     cellsState.step += 1;
+      //     cellsState.nextFrameTime = timestamp + INTERVAL_MS;
+      //   }
+
+      //   requestAnimationFrame((t) => updateCells(t, {cellsState, catState}));
+      // }
+
+      // Update the webpage with the current state of the simulation
+      // const displayCells = ({cellsState: {cells, step}, catState}) => {
+      //   // Group cells by row for more efficient processing
+      //   const cellsByRow = Array(numRows).fill().map(() => []);
+      //   cells.forEach(cell => cellsByRow[cell.row].push(cell));
+
+      //   // Format each row
+      //   const lines = cellsByRow.map(rowCells => {
+      //     return rowCells
+      //       .sort((a, b) => a.column - b.column)
+      //       .map(({formattedChar: {char, tags}, stopStep}) => {
+      //         // Start with the base character
+      //         let result = char;
+
+      //         // Apply formatting based on tags
+      //         for (const {name, args} of tags) {
+      //           // Bold is always applied
+      //           if (name === 'b') {
+      //             result = `<strong>${result}</strong>`;
+      //           }
+
+      //           // Only create other tags near the end of the animation to avoid slowdown
+      //           // Bold is an exception as it gives the eye something to track during the animation
+      //           if (step < Math.floor(stopStep * 0.9)) {
+      //             continue;
+      //           }
+
+      //           // Apply appropriate HTML tags based on tag name
+      //           if (name === 'i') {
+      //             result = `<em>${result}</em>`;
+      //           } else if (name === 'link') {
+      //             result = `<a href="${args[0]}" target="_blank" style="color: inherit; text-decoration: underline;">${result}</a>`;
+      //           } else if (name === 'cat') {
+      //             result = `<span class="cat">${result}</span>`;
+      //           } else if (name === 'eye') {
+      //             result = `<span class="eye">${result}</span>`;
+      //           }
+      //         }
+
+      //         return result;
+      //       })
+      //       .join('');
+      //   });
+
+      //   // Update DOM
+      //   const container = document.getElementById('container');
+      //   container.innerHTML = lines.join('\n');
+      // }
+
+      // Create a map to look up cells by their row and column for efficient lookup
+      const createCellMap = cells => {
+        const cellMap = {};
+        cells.forEach(cell => {
+          const key = `${cell.row},${cell.column}`;
+          cellMap[key] = cell;
+        });
+        return cellMap;
+      }
+
+      // Sample a background color close to white
+      const sampleBackgroundColor = () => {
+        const r = sampleUniformInt(245, 255);
+        const g = sampleUniformInt(245, 255);
+        const b = sampleUniformInt(245, 250); // Want less blue than red or green
+        return `rgb(${r}, ${g}, ${b})`;
+      }
+
+      // Random sampling functions
+      const sampleUniform = (min, max) => min + Math.random() * (max - min);
+
+      const sampleUniformInt = (min, max) => Math.floor(sampleUniform(min, max + 1));
+
+      const sampleExponential = lambda => -Math.log(Math.random()) / lambda;
+
+      // Box-Muller transform for sampling from a Gaussian distribution
+      const sampleGaussian = () => {
+        const r = Math.sqrt(sampleExponential(2));
+        const theta = 2 * Math.PI * Math.random();
+        return r * Math.cos(theta);
+      }
+
+      let mouseX = 0;
+      let mouseY = 0;
+      let mousePrevX = 0;
+      let mousePrevY = 0;
+      let mouseVelocityX = 0;
+      let mouseVelocityY = 0;
+
+      document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      // Sample and set a random background color
+      document.body.style.backgroundColor = sampleBackgroundColor();
+
+      // Calculate number of columns and min rows based on window size.
+      // Ensure the number of columns is even so we can do tilings of 2x2 squares.
+      // Subtract 1 so we don't see scrollbars.
+      const numColumns = Math.floor((window.innerWidth / CHAR_WIDTH - 1) / 2) * 2;
+      const minRows = Math.floor(window.innerHeight / CHAR_HEIGHT) - 1;
+
+      // Parse the website text and wrap it into lines
+      const chars = wrapText(parseTags(dedent(CONTENT)), numColumns);
+
+      // Set initial positions
+      for (const char of chars) {
+        char.row = sampleUniformInt(0, minRows);
+        char.column = sampleUniformInt(0, numColumns);
+      }
+
+      createElements(chars);
+      requestAnimationFrame(t => animate(t, {frame: 0, nextFrameTime: 0, chars}));
+
+      // // Calculate the number of rows based on the block positions
+      // // Ensure the number of rows is even so we can do tilings of 2x2 squares.
+      // const maxBlockHeight = Math.max(...textBlocks.map(b => b.startRow + b.height));
+      // const numRows = Math.floor(Math.max(minRows, maxBlockHeight + Math.floor(MARGIN_BOTTOM * numColumns)) / 2) * 2;
+
+      // // Generate the cells and simulate the movement of the characters
+      // const cells = generateCells(numRows, numColumns);
+      // simulateAndPopulateCellChars(cells, numRows, numColumns, textBlocks);
+
+      // // Mutable animation state
+      // const catState = {catEyesOpen: false, nextFrameTime: 0, isHover: false};
+      // const cellsState = {cells, numRows, numColumns, step: 0, nextFrameTime: 0};
+
+      // requestAnimationFrame(t => updateCat(t, catState));
+      // requestAnimationFrame(t => updateCells(t, {catState, cellsState}));
+      // displayCells({catState, cellsState});
+    }
+
+    document.fonts.ready.then(dance);
+  </script>
+</body>
+</html>

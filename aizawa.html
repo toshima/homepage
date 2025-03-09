@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aizawa Attractor - 1000 Particles</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+        .instructions {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Use arrow keys to rotate | +/- to zoom | R to reset | P to pause</p>
+    </div>
+    <canvas id="attractor"></canvas>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('attractor');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas size to window size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Aizawa attractor parameters
+        const param_a = 0.95;
+        const param_b = 0.7;
+        const param_c = 0.6;
+        const param_d = 3.5;
+        const param_e = 0.25;
+        const param_f = 0.1;
+        const dt = 0.01;
+
+        // Visualization parameters
+        const NUM_PARTICLES = 10000;
+        let particles = [];
+        let rotationX = Math.PI / 2; // 90 degrees around X axis
+        let rotationY = Math.PI / 2; // Side view (90 degrees)
+        let rotationZ = 0;
+        let zoom = 225; // 50% bigger than before
+        let isRunning = true;
+
+        // Initialize particles with truly random positions
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < NUM_PARTICLES; i++) {
+                // Randomly distribute initial positions widely
+                const x = (Math.random() * 2 - 1) * 0.5;
+                const y = (Math.random() * 2 - 1) * 0.5;
+                const z = (Math.random() * 2 - 1) * 0.5;
+
+                // Start with a random color
+                const r = Math.floor(Math.random() * 155 + 100);
+                const g = Math.floor(Math.random() * 155 + 100);
+                const b = Math.floor(Math.random() * 155 + 100);
+
+                particles.push({
+                    x: x,
+                    y: y,
+                    z: z,
+                    r: r,
+                    g: g,
+                    b: b,
+                    size: Math.random() * 0.15 + 0.1 // Slightly larger to be visible
+                });
+            }
+
+            // Let the system evolve to settle points onto the attractor
+            for (let step = 0; step < 200; step++) {
+                updateParticles();
+            }
+        }
+
+        // Update particle positions based on Aizawa attractor equations
+        function updateParticles() {
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+
+                // Calculate derivatives
+                const dx = (p.z - param_b) * p.x - param_d * p.y;
+                const dy = param_d * p.x + (p.z - param_b) * p.y;
+                const dz = param_c + param_a * p.z - p.z*p.z*p.z/3 - (p.x*p.x + p.y*p.y) * (1 + param_e * p.z) + param_f * p.z * p.x*p.x*p.x;
+
+                // Update position with Euler method
+                p.x += dx * dt;
+                p.y += dy * dt;
+                p.z += dz * dt;
+
+                // Update color based on position
+                p.r = Math.floor(map(p.x, -1, 1, 50, 255));
+                p.g = Math.floor(map(p.y, -1, 1, 50, 255));
+                p.b = Math.floor(map(p.z, -1, 1, 50, 255));
+            }
+        }
+
+        // Map a value from one range to another
+        function map(value, inMin, inMax, outMin, outMax) {
+            return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
+        }
+
+        // 3D to 2D projection with rotation
+        function project(point) {
+            // Apply rotations
+            let x = point.x;
+            let y = point.y;
+            let z = point.z;
+
+            // Rotate around X-axis
+            const tempY1 = y;
+            const tempZ1 = z;
+            y = tempY1 * Math.cos(rotationX) - tempZ1 * Math.sin(rotationX);
+            z = tempY1 * Math.sin(rotationX) + tempZ1 * Math.cos(rotationX);
+
+            // Rotate around Y-axis
+            const tempX2 = x;
+            const tempZ2 = z;
+            x = tempX2 * Math.cos(rotationY) - tempZ2 * Math.sin(rotationY);
+            z = tempX2 * Math.sin(rotationY) + tempZ2 * Math.cos(rotationY);
+
+            // Rotate around Z-axis
+            const tempX3 = x;
+            const tempY3 = y;
+            x = tempX3 * Math.cos(rotationZ) - tempY3 * Math.sin(rotationZ);
+            y = tempX3 * Math.sin(rotationZ) + tempY3 * Math.cos(rotationZ);
+
+            // Project to 2D with perspective
+            const scale = zoom / (3 + z);
+            return {
+                x: x * scale,
+                y: y * scale,
+                z: z, // Keep z for depth sorting
+                size: point.size * scale, // Scale size with perspective
+                r: point.r,
+                g: point.g,
+                b: point.b
+            };
+        }
+
+        // Render the scene
+        function render() {
+            // Semi-transparent background for trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.002)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update particle positions if running
+            if (isRunning) {
+                updateParticles();
+            }
+
+            // Sort particles by z-value for depth effect
+            const sortedParticles = [...particles].sort((a, b) => a.z - b.z);
+
+            // Draw particles
+            for (const p of sortedParticles) {
+                // Project 3D to 2D
+                const projected = project(p);
+
+                // Draw the particle
+                ctx.fillStyle = `rgba(${p.r}, ${p.g}, ${p.b}, 0.6)`;
+                ctx.beginPath();
+                ctx.arc(
+                    canvas.width / 2 + projected.x,
+                    canvas.height / 2 + projected.y,
+                    Math.min(projected.size, 1.0),
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+            }
+
+            // Continue animation
+            requestAnimationFrame(render);
+        }
+
+        // Keyboard controls
+        window.addEventListener('keydown', (event) => {
+            const key = event.key;
+
+            // Rotation controls
+            if (key === 'ArrowLeft') rotationY -= 0.05;
+            if (key === 'ArrowRight') rotationY += 0.05;
+            if (key === 'ArrowUp') rotationX -= 0.05;
+            if (key === 'ArrowDown') rotationX += 0.05;
+
+            // Zoom controls
+            if (key === '+' || key === '=') zoom *= 1.1;
+            if (key === '-') zoom /= 1.1;
+
+            // Reset view
+            if (key === 'r' || key === 'R') {
+                rotationX = Math.PI / 2;
+                rotationY = Math.PI / 2;
+                rotationZ = 0;
+                zoom = 225;
+            }
+
+            // Pause/play
+            if (key === 'p' || key === 'P') {
+                isRunning = !isRunning;
+            }
+
+            // Prevent default for navigation keys
+            if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '-', '='].includes(key)) {
+                event.preventDefault();
+            }
+        });
+
+        // Start the visualization
+        initParticles();
+        render();
+    </script>
+</body>
+</html>
