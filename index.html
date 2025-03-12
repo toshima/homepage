@@ -1,12 +1,3 @@
-<!--
-TODO
-- just have my pfp as a list of cells with 1/2 width and height. Add width and height as properties of cells.
-  - these cells can go through any other cell
-  - add collission = false attribute
-- add back transaprent bg
-
--->
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -40,7 +31,7 @@ TODO
     #container a {
       color: inherit; /* Don't colorize links */
     }
-    .pfpCell {
+    .pixels {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       grid-template-rows: repeat(4, 1fr);
@@ -64,7 +55,8 @@ TODO
       const MARGIN_BOTTOM = 0.02; // Margin at bottom of page
       const MARGIN_SIDE = 0.05; // Margin on each side of page
       const NUM_STEPS = 200; // Number of steps in the animation. Determines how long the animation lasts.
-      const INTERVAL_MS = 30; // Interval between steps in the animation. Determines how fast the characters move.
+      const INTERVAL_MS = 15; // Interval between steps in the animation. Determines how fast the characters move.
+      const EVOLVE_FRAMES = 500;
 
       const PFP = [
         [[255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255], [255, 255, 255]],
@@ -98,13 +90,14 @@ TODO
         [[0, 0, 0], [0, 0, 0], [31, 35, 44], [31, 35, 44], [31, 35, 44], [31, 35, 44], [31, 35, 44], [31, 35, 44], [31, 35, 44], [31, 35, 44], [31, 35, 44], [31, 35, 44], [31, 35, 44], [31, 35, 44], [31, 35, 44], [158, 132, 123], [158, 132, 123], [158, 132, 123], [158, 132, 123], [96, 76, 71], [31, 35, 44], [89, 101, 122], [86, 97, 118], [31, 35, 44], [31, 35, 44], [31, 35, 44], [31, 35, 44], [31, 35, 44], [31, 35, 44], [83, 94, 114], [83, 94, 114], [83, 94, 114]]
       ];
 
+      const SMALL_DISPLAY_WARNING = "[b]It looks like you're on mobile or have a small display. Fyi the animation looks best viewed on a computer with a larger display.[/b]\n\n";
+
       // Website content
-      // --------- --------- --------- --------- --------- --------- --------- ---------
       const CONTENT = `
 
         Welcome to the personal homepage of [b]Takaki Oshima[/b].
 
-
+        ${window.innerWidth < 1000 ? SMALL_DISPLAY_WARNING : ''}
         [b]Work[/b]
 
         I'm an independent researcher. My interests span a bunch of domains including
@@ -149,7 +142,7 @@ TODO
             chars.push({
               id: `pixels-${y}-${x}`,
               char: ' ',
-              tags: [{name: 'bg', args: colors.map(toHex).map(replaceBg)}]
+              tags: [{name: 'pixels', args: colors.map(toHex).map(replaceBg)}]
             });
           }
           chars.push({
@@ -201,12 +194,12 @@ TODO
         let line = [];
 
         for (const char of chars) {
-          line.push(char);
           if (char.char === '\n') {
             lines.push(line);
             line = [];
             continue;
           }
+          line.push(char);
 
           if (line.length > width) {
             const i = line.findLastIndex(char => char.char === ' ');
@@ -243,8 +236,8 @@ TODO
               element.style.fontWeight = 'bold';
             } else if (name === 'i') {
               element.style.fontStyle = 'italic';
-            } else if (name === 'bg') {
-              element.classList.add('pfpCell');
+            } else if (name === 'pixels') {
+              element.classList.add('pixels');
 
               // Define colors
               args.forEach(color => {
@@ -284,6 +277,8 @@ TODO
       }
 
       const evolveChars = ({frame, chars}) => {
+        const t = Math.min(frame / EVOLVE_FRAMES, 1);
+
         // Map to look up chars by their position
         const positionMap = createPositionMap(chars);
 
@@ -313,10 +308,11 @@ TODO
         for (const char of sortedChars) {
           const mouseDx = mouseState.x / CHAR_WIDTH - char.x;
           const mouseDy = mouseState.y / CHAR_HEIGHT - char.y;
+          const mouseDist = Math.hypot(mouseDx, mouseDy);
           if (
-            char.tags.some(tag => tag.name === 'link')
+            t > 0.99 && char.tags.some(tag => tag.name === 'link')
             && char.finalY === char.y && char.finalX === char.x
-            && Math.hypot(mouseDx, mouseDy) < numColumns / 10
+            && mouseDist < 0.05 * numColumns
           ) {
             frozenPositions.add(`${char.y},${char.x}`);
           }
@@ -329,43 +325,42 @@ TODO
 
           let deltaX = 0;
           let deltaY = 0;
-          const t = Math.min(frame / 500, 1);
 
-          // Pull towards final position. Ramps up from time 0.2 to 1.
-          const finalPullWeight = Math.min(1, Math.max(0, (t - 0.2 + sampleUniform(-0.05, 0.05)) / 0.8));
+          // Pull towards final position. Starts at time 0.25 - 0.75 depending on weight and ends at time 1
+          const finalPullWeight = Math.max(0, (t - 0.75 + char.weight * 0.5) / 0.75);
           deltaX += finalPullWeight * (char.finalX - char.x);
           deltaY += finalPullWeight * (char.finalY - char.y);
 
-          // Add rotation around center. Ramps down from time 0 to time 0.6.
+          // Add rotation around center. Ramps down from time 0 to time 0.8.
           const centerDx = numColumns / 2 - char.x;
           const centerDy = numRows / 2 - char.y;
           const centerDist = Math.hypot(centerDx, centerDy);
           if (centerDist > 0) {
-            const centerRotationWeight = Math.max(0, 0.6 - t + sampleUniform(-0.05, 0.05)) / 0.6;
+            const centerRotationWeight = Math.max(0, 0.8 - t) / 0.8;
             deltaX += centerRotationWeight * centerDy / centerDist;
             deltaY += centerRotationWeight * -centerDx / centerDist;
           }
 
           // Rain
-          const rainWeight = Math.max(0, 0.6 - t + sampleUniform(-0.05, 0.05)) / 0.6;
-          if (t > 0.2) {
-            deltaX += rainWeight;
-            deltaY += rainWeight;
-          }
+          // const rainWeight = Math.max(0, 0.6 - t + sampleUniform(-0.05, 0.05)) / 0.6;
+          // if (t > 0.2) {
+          //   deltaX += rainWeight;
+          //   deltaY += rainWeight;
+          // }
 
           // Add mouse influence
           const mouseDx = mouseState.x / CHAR_WIDTH - char.x;
           const mouseDy = mouseState.y / CHAR_HEIGHT - char.y;
           const mouseDist = Math.hypot(mouseDx, mouseDy);
-          const maxMouseDist = numColumns / 12;
-          if (mouseDist / maxMouseDist < 1 - char.weight) { // Only affect characters within range
+          const maxMouseDist = 8;
+          if (mouseDist / maxMouseDist < 1 - char.weight && mouseState.seen) { // Only affect characters within range
             const mouseSpeed = Math.hypot(mouseState.velocityX / CHAR_WIDTH, mouseState.velocityY / CHAR_HEIGHT);
             const mouseSpeedWeight = Math.min(mouseSpeed / 100, 1);
             deltaX += 100 * mouseSpeedWeight / mouseDist * mouseDx;
             deltaY += 100 * mouseSpeedWeight / mouseDist * mouseDy;
 
-            // deltaX += mouseSpeedWeight * mouseVelocityX / mouseSpeed;
-            // deltaY += mouseSpeedWeight * mouseVelocityY / mouseSpeed;
+            deltaX += 100 * mouseSpeedWeight * mouseState.velocityX / mouseSpeed;
+            deltaY += 100 * mouseSpeedWeight * mouseState.velocityY / mouseSpeed;
 
             // Add clockwise curl effect around mouse
             // deltaX += 20 * -mouseSpeedWeight * mouseDy / mouseDist; 
@@ -373,23 +368,22 @@ TODO
           }
 
           // Explosion
-          const EXPLODE_FRAME = 200;
-          if (frame === EXPLODE_FRAME) {
-            console.log('exploding');
-            char.driftX += -centerDx / centerDist;
-            char.driftY += -centerDy / centerDist;
-          }
+          // if (frame === Math.floor(0.5 * EVOLVE_FRAMES)) {
+          //   console.log('exploding');
+          //   char.driftX += -centerDx / centerDist;
+          //   char.driftY += -centerDy / centerDist;
+          // }
 
           // Drift
-          const driftProb = 0.001;// * Math.max(0, 1 - t);
-          if (Math.random() < driftProb && t < 1) {
-            char.driftX += Math.random() < 0.5 ? sampleUniform(-1, 1) : 0;
-            char.driftY += Math.random() < 0.5 ? sampleUniform(-1, 1) : 0;
-          }
-          deltaX += 100 * char.driftX;
-          deltaY += 100 * char.driftY;
-          char.driftX *= t < 1 ? 0.99 : 0.8;
-          char.driftY *= t < 1 ? 0.99 : 0.8;
+          // const driftProb = 0.001;// * Math.max(0, 1 - t);
+          // if (Math.random() < driftProb && t < 1) {
+          //   char.driftX += Math.random() < 0.5 ? sampleUniform(-1, 1) : 0;
+          //   char.driftY += Math.random() < 0.5 ? sampleUniform(-1, 1) : 0;
+          // }
+          // deltaX += 100 * char.driftX;
+          // deltaY += 100 * char.driftY;
+          // char.driftX *= t < 1 ? 0.99 : 0.8;
+          // char.driftY *= t < 1 ? 0.99 : 0.8;
 
           // If it doesn't move much, just skip and mark it as frozen
           if (Math.hypot(deltaX, deltaY) < 0.001) {
@@ -458,11 +452,13 @@ TODO
         prevX: 0,
         prevY: 0,
         velocityX: 0,
-        velocityY: 0
+        velocityY: 0,
+        seen: false
       };
       document.addEventListener('mousemove', (e) => {
         mouseState.x = e.clientX;
         mouseState.y = e.clientY;
+        mouseState.seen = true;
       });
 
       // Calculate number of columns and min rows based on window size.
@@ -474,11 +470,15 @@ TODO
       const contentChars = getCharsFromText(dedent(CONTENT));
       let chars = [...pfpChars, ...contentChars];
 
+      // Calculate number of columns to wrap text into
+      // It's between 50% and 80% depending on the window width
+      const sizeWeight = Math.min(1, Math.max(0, (window.innerWidth - 600) / 1000));
+      const numWrapColumns = Math.ceil(numColumns * (0.5 * sizeWeight + 0.8 * (1 - sizeWeight)));
+
       // Wrap the text into lines and attach final positions
-      const startY = Math.round(numRows / 10);
-      const startX = Math.round(numColumns / 4);
-      const numWrapColumns = Math.ceil(numColumns / 2);
       const lines = wrapText(chars, numWrapColumns);
+      const startY = Math.max(5, Math.floor((numRows - lines.length) * 0.4));
+      const startX = Math.floor((numColumns - numWrapColumns) * 0.5);
       for (let y = 0; y < lines.length; y++) {
         for (let x = 0; x < lines[y].length; x++) {
           const char = lines[y][x];
@@ -486,6 +486,9 @@ TODO
           char.finalX = x + startX;
         }
       }
+
+      // Remove chars not assigned a final position, such as spaces that were wrapped
+      chars = chars.filter(c => c.finalX !== undefined && c.finalY !== undefined);
 
       // Remove whitespace chars
       chars = chars.filter(c => (c.char !== ' ' && c.char !== '\n') || c.tags.length > 0);
@@ -507,4 +510,3 @@ TODO
   </script>
 </body>
 </html>
-
