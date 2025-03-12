@@ -116,7 +116,7 @@
 
         [b]About this website[/b]
 
-        This site is best viewed on a large display. It uses my favourite coding font, [link https://adobe-fonts.github.io/source-code-pro/]source code pro[/link].
+        This site is best viewed on a large display. It uses my favourite coding font, [link https://adobe-fonts.github.io/source-code-pro/]Source Code Pro[/link].
 
         It takes inspiration from the work of generative artists like [link https://ertdfgcvb.xyz/]Andreas Gysin[/link] and more generally from the field of generative art.
 
@@ -125,7 +125,7 @@
 
         [b]Socials[/b]
 
-        I don't use social media much but I have accounts on [link https://github.com/toshima/]github[/link] and (less actively) on [link https://x.com/takakioshima/]twitter[/link] and [link https://www.linkedin.com/in/takakioshima/]linkedin[/link].
+        I don't use social media much but I have accounts on [link https://github.com/toshima/]Github[/link] and (less actively) on [link https://x.com/takakioshima/]Twitter[/link] and [link https://www.linkedin.com/in/takakioshima/]LinkedIn[/link].
 
 
          /\\_/\\
@@ -232,46 +232,46 @@
       const populateDOMElements = (chars) => {
         const container = document.getElementById('container');
         for (const char of chars) {
-          const span = document.createElement('span');
-          span.style.position = 'absolute';
-          span.textContent = char.char;
-          span.id = `char-${char.id}`;
-          span.style.top = `${char.y * CHAR_HEIGHT}px`;
-          span.style.left = `${char.x * CHAR_WIDTH}px`;
-          span.style.minWidth = `${CHAR_WIDTH}px`;
-          span.style.minHeight = `${CHAR_HEIGHT}px`;
+          const el = document.createElement('a');
+          el.style.position = 'absolute';
+          el.textContent = char.char;
+          el.id = `char-${char.id}`;
+          el.style.top = `${char.y * CHAR_HEIGHT}px`;
+          el.style.left = `${char.x * CHAR_WIDTH}px`;
+          el.style.minWidth = `${CHAR_WIDTH}px`;
+          el.style.minHeight = `${CHAR_HEIGHT}px`;
 
           for (const {name, args} of char.tags) {
             if (name === 'link') {
-              span.href = args[0];
+              el.href = args[0];
             } else if (name === 'b') {
-              span.style.fontWeight = 'bold';
+              el.style.fontWeight = 'bold';
             } else if (name === 'i') {
-              span.style.fontStyle = 'italic';
+              el.style.fontStyle = 'italic';
             } else if (name === 'eye') {
-              span.classList.add('eye');
+              el.classList.add('eye');
             } else if (name === 'pixels') {
-              span.classList.add('pixels');
+              el.classList.add('pixels');
 
               // Define colors
               args.forEach(color => {
-                const colorSpan = document.createElement('span');
-                colorSpan.style.background = color;
-                span.appendChild(colorSpan);
+                const colorElement = document.createElement('a');
+                colorElement.style.background = color;
+                el.appendChild(colorElement);
               });
             }
           }
 
-          container.appendChild(span);
+          container.appendChild(el);
         }
 
         // Add invisible span in the bottom right corner so the container size is fixed
-        const cornerSpan = document.createElement('span');
-        cornerSpan.style.position = 'absolute';
-        cornerSpan.style.top = `${(numRows-1) * CHAR_HEIGHT}px`;
-        cornerSpan.style.left = `${(numColumns-1) * CHAR_WIDTH}px`;
-        cornerSpan.textContent = ' ';
-        container.appendChild(cornerSpan);
+        const cornerElement = document.createElement('a');
+        cornerElement.style.position = 'absolute';
+        cornerElement.style.top = `${(numRows-1) * CHAR_HEIGHT}px`;
+        cornerElement.style.left = `${(numColumns-1) * CHAR_WIDTH}px`;
+        cornerElement.textContent = ' ';
+        container.appendChild(cornerElement);
       }
 
       const animateChars = t => {
@@ -461,7 +461,7 @@
 
       // Make the cat's eyes blink
       const animateCat = t => {
-        if (t > catState.nextFrameTime + INTERVAL_MS && t > catState.lastPokeCatTime + 2000) {
+        if (t > catState.nextFrameTime + INTERVAL_MS && t > catState.lastPokeCatTime + 1500) {
           catState.catEyesOpen = !catState.catEyesOpen;
 
           // Update all eye elements
@@ -470,8 +470,9 @@
 
           // Wait a random log-normally distributed length of time
           // Eyes stay open longer than they stay closed
-          const waitMultiplier = catState.catEyesOpen ? 3 : 0.15;
-          const wait = Math.exp(sampleGaussian()) * waitMultiplier * 1000;
+          const waitSd = 0.7;
+          const waitMultiplier = catState.catEyesOpen ? 2 : 0.15;
+          const wait = Math.exp(waitSd * sampleGaussian()) * waitMultiplier * 1000;
           catState.nextFrameTime = t + wait;
         }
 
