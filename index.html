@@ -58,7 +58,7 @@
       const INTERVAL_MS = 15; // Interval between steps in the animation. Determines how fast the characters move.
       const EVOLVE_FRAMES = 400;
 
-      const PFP = [
+      const PFP_IMAGE = [
         ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
         ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
         ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
@@ -102,7 +102,7 @@
 
         Welcome to the personal homepage of [b]Takaki Oshima[/b].
 
-        ${window.innerWidth < 1000 ? SMALL_DISPLAY_WARNING : ''}
+        ${window.innerWidth < 800 ? SMALL_DISPLAY_WARNING : ''}
         [b]Work[/b]
 
         I'm an independent researcher. My interests span a bunch of domains including
@@ -232,51 +232,61 @@
       const populateDOMElements = (chars) => {
         const container = document.getElementById('container');
         for (const char of chars) {
-          const element = document.createElement('a');
-          element.style.position = 'absolute';
-          element.textContent = char.char;
-          element.id = `char-${char.id}`;
-          element.style.top = `${char.y * CHAR_HEIGHT}px`;
-          element.style.left = `${char.x * CHAR_WIDTH}px`;
-          element.style.minWidth = `${CHAR_WIDTH}px`;
-          element.style.minHeight = `${CHAR_HEIGHT}px`;
+          const span = document.createElement('span');
+          span.style.position = 'absolute';
+          span.textContent = char.char;
+          span.id = `char-${char.id}`;
+          span.style.top = `${char.y * CHAR_HEIGHT}px`;
+          span.style.left = `${char.x * CHAR_WIDTH}px`;
+          span.style.minWidth = `${CHAR_WIDTH}px`;
+          span.style.minHeight = `${CHAR_HEIGHT}px`;
 
           for (const {name, args} of char.tags) {
             if (name === 'link') {
-              element.href = args[0];
+              span.href = args[0];
             } else if (name === 'b') {
-              element.style.fontWeight = 'bold';
+              span.style.fontWeight = 'bold';
             } else if (name === 'i') {
-              element.style.fontStyle = 'italic';
+              span.style.fontStyle = 'italic';
+            } else if (name === 'eye') {
+              span.classList.add('eye');
             } else if (name === 'pixels') {
-              element.classList.add('pixels');
+              span.classList.add('pixels');
 
               // Define colors
               args.forEach(color => {
-                const cell = document.createElement('span');
-                cell.style.background = color;
-                element.appendChild(cell);
+                const colorSpan = document.createElement('span');
+                colorSpan.style.background = color;
+                span.appendChild(colorSpan);
               });
             }
           }
 
-          container.appendChild(element);
+          container.appendChild(span);
         }
+
+        // Add invisible span in the bottom right corner so the container size is fixed
+        const cornerSpan = document.createElement('span');
+        cornerSpan.style.position = 'absolute';
+        cornerSpan.style.top = `${(numRows-1) * CHAR_HEIGHT}px`;
+        cornerSpan.style.left = `${(numColumns-1) * CHAR_WIDTH}px`;
+        cornerSpan.textContent = ' ';
+        container.appendChild(cornerSpan);
       }
 
-      const animate = (t, {frame, nextFrameTime, chars}) => {
+      const animateChars = t => {
         const t0 = performance.now();
-        if (t > nextFrameTime) {
+        if (t > charsState.nextFrameTime) {
           updateMouseVelocity();
-          evolveChars({frame, chars});
-          updateChars(chars);
-          nextFrameTime = t + INTERVAL_MS;
-          frame++;
+          evolveChars();
+          updateChars();
+          charsState.nextFrameTime = t + INTERVAL_MS;
+          charsState.frame++;
         }
-        if (frame % 100 === 0) {
-          console.log(`Frame: ${frame} | Time: ${(performance.now() - t0).toFixed(2)}ms`);
-        }
-        requestAnimationFrame(t => animate(t, {frame, nextFrameTime, chars}));
+        // if (charsState.frame % 100 === 0) {
+        //   console.log(`Frame: ${charsState.frame} | Time: ${(performance.now() - t0).toFixed(2)}ms`);
+        // }
+        requestAnimationFrame(animateChars);
       }
 
       const updateMouseVelocity = () => {
@@ -288,11 +298,17 @@
         mouseState.prevY = mouseState.y;
       }
 
-      const evolveChars = ({frame, chars}) => {
+      const evolveChars = () => {
+        const {frame, chars} = charsState;
         const t = Math.min(frame / EVOLVE_FRAMES, 1);
+        const isAfterFinalFrame = frame >= EVOLVE_FRAMES;
 
         // Map to look up chars by their position
-        const positionMap = createPositionMap(chars);
+        const positionMap = {};
+        chars.forEach(char => {
+          const key = `${char.y},${char.x}`;
+          positionMap[key] = char;
+        });
 
         // Indices of positions that have already moved
         const frozenPositions = new Set();
@@ -303,6 +319,11 @@
           frozenPositions.add(`${y},${x}`);
           char.y = y;
           char.x = x;
+
+          if (isAfterFinalFrame && char.tags.some(tag => tag.name === 'eye')) {
+            setCatEyes(CAT_EYE_POKED);
+            lastPokeCatTime = t;
+          }
         }
 
         // Sort so we process characters furthest from their target first
@@ -322,7 +343,8 @@
           const mouseDy = mouseState.y / CHAR_HEIGHT - char.y;
           const mouseDist = Math.hypot(mouseDx, mouseDy);
           if (
-            t > 0.99 && char.tags.some(tag => tag.name === 'link')
+            isAfterFinalFrame
+            && char.tags.some(tag => tag.name === 'link')
             && char.finalY === char.y && char.finalX === char.x
             && mouseDist < 0.05 * numColumns
           ) {
@@ -335,6 +357,7 @@
             continue;
           }
 
+          // How much we want to move the character. We'll adjust this value throughout this function.
           let deltaX = 0;
           let deltaY = 0;
 
@@ -344,21 +367,18 @@
           deltaY += finalPullWeight * (char.finalY - char.y);
 
           // Add rotation around center. Ramps down from time 0 to time 0.8.
-          const centerDx = numColumns / 2 - char.x;
-          const centerDy = numRows / 2 - char.y;
+          // const centerDx = numColumns / 2 - char.x;
+          // const centerDy = minRows / 2 - char.y;
+          const viewportCenterX = window.scrollX + window.innerWidth / 2;
+          const viewportCenterY = window.scrollY + window.innerHeight / 2;
+          const centerDx = viewportCenterX / CHAR_WIDTH - char.x;
+          const centerDy = viewportCenterY / CHAR_HEIGHT - char.y;
           const centerDist = Math.hypot(centerDx, centerDy);
           if (centerDist > 0) {
             const centerRotationWeight = Math.max(0, 0.8 - t) / 0.8;
             deltaX += centerRotationWeight * centerDy / centerDist;
             deltaY += centerRotationWeight * -centerDx / centerDist;
           }
-
-          // Rain
-          // const rainWeight = Math.max(0, 0.6 - t + sampleUniform(-0.05, 0.05)) / 0.6;
-          // if (t > 0.2) {
-          //   deltaX += rainWeight;
-          //   deltaY += rainWeight;
-          // }
 
           // Add mouse influence
           const mouseDx = mouseState.x / CHAR_WIDTH - char.x;
@@ -430,36 +450,23 @@
         }
       };
 
-      const updateChars = (chars) => {
+      const updateChars = () => {
         const container = document.getElementById('container');
-        for (const char of chars) {
-          const element = document.getElementById(`char-${char.id}`);
-          element.style.top = `${char.y * CHAR_HEIGHT}px`;
-          element.style.left = `${char.x * CHAR_WIDTH}px`;
+        for (const char of charsState.chars) {
+          const span = document.getElementById(`char-${char.id}`);
+          span.style.top = `${char.y * CHAR_HEIGHT}px`;
+          span.style.left = `${char.x * CHAR_WIDTH}px`;
         }
       }
 
-      // Create a map to look up chars by their y and x for efficient lookup
-      const createPositionMap = chars => {
-        const positionMap = {};
-        chars.forEach(char => {
-          const key = `${char.y},${char.x}`;
-          positionMap[key] = char;
-        });
-        return positionMap;
-      }
-
       // Make the cat's eyes blink
-      const animateCat = (t, catState) => {
-        if (t > catState.nextFrameTime + INTERVAL_MS) {
+      const animateCat = t => {
+        if (t > catState.nextFrameTime + INTERVAL_MS && t > catState.lastPokeCatTime + 2000) {
           catState.catEyesOpen = !catState.catEyesOpen;
-          const eye = catState.catEyesOpen ? CAT_EYE_OPEN : CAT_EYE_CLOSED;
 
           // Update all eye elements
-          const spans = document.querySelectorAll('.eye');
-          spans.forEach(span => {
-            span.textContent = eye;
-          });
+          const eye = catState.catEyesOpen ? CAT_EYE_OPEN : CAT_EYE_CLOSED;
+          setCatEyes(eye);
 
           // Wait a random log-normally distributed length of time
           // Eyes stay open longer than they stay closed
@@ -468,7 +475,14 @@
           catState.nextFrameTime = t + wait;
         }
 
-        requestAnimationFrame(t => animateCat(t, catState));
+        requestAnimationFrame(animateCat);
+      }
+
+      const setCatEyes = eye => {
+        const spans = document.querySelectorAll('.eye');
+        spans.forEach(span => {
+          span.textContent = eye;
+        });
       }
 
       // Random sampling functions
@@ -497,27 +511,30 @@
         seen: false
       };
       document.addEventListener('mousemove', (e) => {
-        mouseState.x = e.clientX;
-        mouseState.y = e.clientY;
+        mouseState.x = e.pageX;
+        mouseState.y = e.pageY;
         mouseState.seen = true;
       });
 
-      // Calculate number of columns and min rows based on window size.
-      const numRows = Math.floor(window.innerHeight / CHAR_HEIGHT) - 1;
-      const numColumns = Math.floor(window.innerWidth / CHAR_WIDTH) - 1;
+      // Calculate number of columns and min rows based on window size
+      // Subtract 2 so that the horizontal scrollbar doesn't show up
+      const minRows = Math.floor(window.innerHeight / CHAR_HEIGHT);
+      const numColumns = Math.floor(window.innerWidth / CHAR_WIDTH) - 2;
 
       // Parse the website text and wrap it into lines
-      const pfpChars = getCharsFromPixels(PFP);
-      const contentChars = getCharsFromText(dedent(CONTENT));
-      let chars = [...pfpChars, ...contentChars];
+      let chars = [
+        ...getCharsFromPixels(PFP_IMAGE),
+        ...getCharsFromText(dedent(CONTENT))
+      ];
 
       // Calculate number of columns to wrap text into
-      // It's between 50% and 80% depending on the window width
+      // It's between 60% and 80% depending on the window width
       const sizeWeight = Math.min(1, Math.max(0, (window.innerWidth - 600) / 1000));
-      const numWrapColumns = Math.ceil(numColumns * (0.5 * sizeWeight + 0.8 * (1 - sizeWeight)));
+      const numWrapColumns = Math.ceil(numColumns * (0.6 * sizeWeight + 0.8 * (1 - sizeWeight)));
 
       // Wrap the text into lines and attach final positions
       const lines = wrapText(chars, numWrapColumns);
+      const numRows = Math.max(minRows, lines.length + 8);
       const startY = Math.max(5, Math.floor((numRows - lines.length) * 0.4));
       const startX = Math.floor((numColumns - numWrapColumns) * 0.5);
       for (let y = 0; y < lines.length; y++) {
@@ -538,14 +555,29 @@
       for (const char of chars) {
         char.y = sampleUniformInt(0, numRows);
         char.x = sampleUniformInt(0, numColumns);
-        char.driftY = Math.random() < 0.01 ? sampleUniform(-1, 1) : 0;
-        char.driftX = Math.random() < 0.01 ? sampleUniform(-1, 1) : 0;
         char.weight = sampleUniform(0, 1);
+        char.driftY = 0;
+        char.driftX = 0;
       }
 
+      const charsState = {
+        frame: 0,
+        nextFrameTime: 0,
+        chars,
+        minRows,
+        numColumns,
+        numWrapColumns,
+      }
+
+      const catState = {
+        nextFrameTime: 0,
+        catEyesOpen: false,
+        lastPokeCatTime: 0,
+      };
+
       populateDOMElements(chars);
-      requestAnimationFrame(t => animate(t, {frame: 0, nextFrameTime: 0, chars}));
-      // requestAnimationFrame(t => animateCat(t, {catEyesOpen: false, nextFrameTime: 0}));
+      requestAnimationFrame(animateChars);
+      requestAnimationFrame(animateCat);
     }
 
     document.fonts.ready.then(dance);
