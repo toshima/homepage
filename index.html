@@ -1,3 +1,8 @@
+<!--
+TODO:
+- Refactor - have a single CONFIG object and state object
+-->
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -384,15 +389,15 @@
           const mouseDx = mouseState.x / CHAR_WIDTH - char.x;
           const mouseDy = mouseState.y / CHAR_HEIGHT - char.y;
           const mouseDist = Math.hypot(mouseDx, mouseDy);
-          const maxMouseDist = 8;
+          const maxMouseDist = 6;
           if (mouseDist / maxMouseDist < 1 - char.weight && mouseState.seen) { // Only affect characters within range
             const mouseSpeed = Math.hypot(mouseState.velocityX / CHAR_WIDTH, mouseState.velocityY / CHAR_HEIGHT);
             const mouseSpeedWeight = Math.min(mouseSpeed / 100, 1);
-            deltaX += 100 * mouseSpeedWeight / mouseDist * mouseDx;
-            deltaY += 100 * mouseSpeedWeight / mouseDist * mouseDy;
+            deltaX += 100 * (1 - char.weight) * mouseSpeedWeight / mouseDist * mouseDx;
+            deltaY += 100 * (1 - char.weight) * mouseSpeedWeight / mouseDist * mouseDy;
 
-            deltaX += 100 * mouseSpeedWeight * mouseState.velocityX / mouseSpeed;
-            deltaY += 100 * mouseSpeedWeight * mouseState.velocityY / mouseSpeed;
+            deltaX += 300 * (1 - char.weight) * mouseSpeedWeight * mouseState.velocityX / mouseSpeed;
+            deltaY += 300 * (1 - char.weight) * mouseSpeedWeight * mouseState.velocityY / mouseSpeed;
 
             // Add clockwise curl effect around mouse
             // deltaX += 20 * -mouseSpeedWeight * mouseDy / mouseDist; 
