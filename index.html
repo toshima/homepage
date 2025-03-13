@@ -35,6 +35,12 @@
       grid-template-columns: repeat(2, 1fr);
       grid-template-rows: repeat(4, 1fr);
     }
+    .spell {
+      text-decoration: underline;
+    }
+    .spell:hover {
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -76,11 +82,11 @@
 
           [b]About this website[/b]
 
-          This site is best viewed on a large display. It uses my favourite coding font, [link https://adobe-fonts.github.io/source-code-pro/]Source Code Pro[/link].
+          This site is best viewed on a large display. It takes inspiration from the work of generative artists like [link https://ertdfgcvb.xyz/]Andreas Gysin[/link] and more generally from the field of generative art. The source code for this website can be found [link https://github.com/toshima/homepage]here[/link].
 
-          It takes inspiration from the work of generative artists like [link https://ertdfgcvb.xyz/]Andreas Gysin[/link] and more generally from the field of generative art.
+          Click [spell]here[/spell] to invoke an ancient spell.
 
-          The source code for this website can be found [link https://github.com/toshima/homepage]here[/link]. This site was last updated [i]March 2025[/i].
+          This site was last updated [i]March 2025[/i].
 
 
           [b]Socials[/b]
@@ -88,9 +94,9 @@
           I don't use social media much but I have accounts on [link https://github.com/toshima/]Github[/link] and (less actively) on [link https://x.com/takakioshima/]Twitter[/link] and [link https://www.linkedin.com/in/takakioshima/]LinkedIn[/link].
 
 
-          [cat] /\\_/\\
+           /\\_/\\
           ( [eye]-[/eye].[eye]-[/eye] )
-             ^   [/cat]
+             ^
         `),
         pfpImage: {
           columns: 32,
@@ -120,7 +126,6 @@
         mouse: {
           x: 0,
           y: 0,
-          seen: false,
         },
         click: {
           x: 0,
@@ -291,8 +296,8 @@
             el.style.fontWeight = 'bold';
           } else if (name === 'i') {
             el.style.fontStyle = 'italic';
-          } else if (name === 'cat') {
-            el.classList.add('cat');
+          } else if (name === 'spell') {
+            el.classList.add('spell');
           } else if (name === 'eye') {
             el.classList.add('eye');
           } else if (name === 'pixels') {
@@ -398,35 +403,23 @@
             moveVector.y += w * -centerVector.x / centerDistance;
           }
 
-          // Pull towards mouse position
-          const mouseVector = {
-            x: state.mouse.x / charWidth - char.x,
-            y: state.mouse.y / charHeight - char.y,
-          }
-          const mouseDistance = Math.hypot(mouseVector.x, mouseVector.y);
-          const isPixels = char.tags.some(tag => tag.name === 'pixels');
-          if (isPixels && mouse.seen && mouseDistance / 8 < (1 - char.weight)) {
-            moveVector.x += (1 - char.weight) * mouseVector.x / mouseDistance;
-            moveVector.y += (1 - char.weight) * mouseVector.y / mouseDistance;
-          }
-
-          // If clicked recently, do an explosion effect
+          // Cast a spell
           const timeSinceLastClick = Date.now() - state.click.lastClickTime;
-          if (timeSinceLastClick < 3000 * (1 - char.weight)) {
-            const clickVector = {
-              x: state.click.x / charWidth - char.x,
-              y: state.click.y / charHeight - char.y,
+          if (timeSinceLastClick < 4000 * (1 - char.weight)) {
+            const mouseVector = {
+              x: state.mouse.x / charWidth - char.x,
+              y: state.mouse.y / charHeight - char.y,
             }
-            const clickDistance = Math.hypot(clickVector.x, clickVector.y);
-            const w = Math.pow(Math.max(0, 1 - clickDistance / 50), 0.5);
+            const mouseDistance = Math.hypot(mouseVector.x, mouseVector.y);
+            const w = Math.pow(Math.max(0, 1 - mouseDistance / 20), 0.5);
 
             // Curl counter-clockwise around click position
-            moveVector.x += -100 * w * clickVector.y / clickDistance;
-            moveVector.y += 100 * w * clickVector.x / clickDistance;
+            moveVector.x += -100 * w * mouseVector.y / mouseDistance;
+            moveVector.y += 100 * w * mouseVector.x / mouseDistance;
 
             // Push away from click position
-            moveVector.x += -20 * w * clickVector.x / clickDistance;
-            moveVector.y += -20 * w * clickVector.y / clickDistance;
+            moveVector.x += -20 * w * mouseVector.x / mouseDistance;
+            moveVector.y += -20 * w * mouseVector.y / mouseDistance;
           }
 
           // If the character is not moving, freeze it
@@ -511,15 +504,10 @@
         document.addEventListener('mousemove', (e) => {
           state.mouse.x = e.pageX;
           state.mouse.y = e.pageY;
-          state.mouse.seen = true;
-          if (e.target.closest('.cat')) {
-            setCatEyes(config.catEyes.poked);
-            state.cat.lastPokeCatTime = Date.now();
-          }
         });
 
         document.addEventListener('click', function(event) {
-          if (!event.target.closest('a')) {
+          if (event.target.closest('.spell')) {
             state.click.x = event.clientX;
             state.click.y = event.clientY;
             state.click.lastClickTime = Date.now();
