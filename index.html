@@ -71,22 +71,22 @@
 
           [b]Work[/b]
 
-          I'm an independent researcher. My interests span a bunch of domains including
-          - Creative coding
-          - Automated market making protocols
-          - Quantitative trading and sports betting
-          - AI
+          I'm an independent researcher. My interests span a bunch of domains including:
+           - Creative coding
+           - Automated market making protocols
+           - Quantitative trading and sports betting
+           - AI
 
-          In the past I worked as a SWE at [link https://google.com/]Google[/link] and as a quant trader at an HFT firm. I later cofounded a startup where I researched and built decentralized systems.
+          In the past I worked at [link https://google.com/]Google[/link] and as an HFT quant. Later, I cofounded a startup where I researched and built decentralized systems.
 
 
           [b]About this website[/b]
 
-          This site is best viewed on a large display. It takes inspiration from the work of generative artists like [link https://ertdfgcvb.xyz/]Andreas Gysin[/link] and more generally from the field of generative art. The source code for this website can be found [link https://github.com/toshima/homepage]here[/link].
+          This site is best viewed on a large display. It takes inspiration from the work of generative artists like [link https://ertdfgcvb.xyz/]Andreas Gysin[/link]. The source code can be found [link https://github.com/toshima/homepage]here[/link].
 
-          Click [spell]here[/spell] to invoke an ancient spell.
+          Click [spell]here[/spell] to invoke an [i]ancient spell[/i].
 
-          This site was last updated [i]March 2025[/i]. [eye]-[/eye].[eye]-[/eye]
+          Last updated [i]March 2025[/i]. [eye]-[/eye].[eye]-[/eye]
 
 
           [b]Socials[/b]
@@ -337,6 +337,7 @@
         const {mouse} = state;
         const t = Math.min(frame / maxFrame, 1);
         const isAfterFinalFrame = frame >= maxFrame;
+        const heightWidthRatio = charHeight / charWidth;
 
         // Map to look up chars by their position
         const positionMap = {};
@@ -390,7 +391,7 @@
           // Curl clockwise around viewport center
           const centerVector = {
             x: (window.scrollX + window.innerWidth / 2) / charWidth - char.x + 0.1 * sample.gaussian(),
-            y: (window.scrollY + window.innerHeight / 2) / charHeight - char.y + 0.1 * sample.gaussian(),
+            y: heightWidthRatio * ((window.scrollY + window.innerHeight / 2) / charHeight - char.y + 0.1 * sample.gaussian()),
           };
           const centerDistance = Math.hypot(centerVector.x, centerVector.y);
           if (centerDistance > 0) {
@@ -404,14 +405,14 @@
           if (timeSinceLastClick < 4000 * (1 - char.weight)) {
             const mouseVector = {
               x: state.mouse.x / charWidth - char.x,
-              y: state.mouse.y / charHeight - char.y,
+              y: heightWidthRatio * (state.mouse.y / charHeight - char.y),
             }
             const mouseDistance = Math.hypot(mouseVector.x, mouseVector.y);
-            const w = Math.pow(Math.max(0, 1 - mouseDistance / 20), 0.5);
+            const w = Math.pow(Math.max(0, 1 - mouseDistance / 40), 0.5);
 
-            // Curl counter-clockwise around click position
-            moveVector.x += -100 * w * mouseVector.y / mouseDistance;
-            moveVector.y += 100 * w * mouseVector.x / mouseDistance;
+            // Curl clockwise around click position
+            moveVector.x += 100 * w * mouseVector.y / mouseDistance;
+            moveVector.y += -100 * w * mouseVector.x / mouseDistance;
 
             // Push away from click position
             moveVector.x += -20 * w * mouseVector.x / mouseDistance;
