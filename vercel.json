@@ -1,0 +1,12 @@
+{
+    "rewrites": [
+        {
+        "source": "/scripts/(.*)",
+        "destination": "/404.html"
+        },
+        {
+        "source": "/README\\.md",
+        "destination": "/404.html"
+        }
+    ]
+}
