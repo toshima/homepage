@@ -88,9 +88,9 @@
           I don't use social media much but I have accounts on [link https://github.com/toshima/]Github[/link] and (less actively) on [link https://x.com/takakioshima/]Twitter[/link] and [link https://www.linkedin.com/in/takakioshima/]LinkedIn[/link].
 
 
-           /\\_/\\
+          [cat] /\\_/\\
           ( [eye]-[/eye].[eye]-[/eye] )
-             ^
+             ^   [/cat]
         `),
         pfpImage: {
           columns: 32,
@@ -120,10 +120,6 @@
         mouse: {
           x: 0,
           y: 0,
-          prevX: 0,
-          prevY: 0,
-          velocityX: 0,
-          velocityY: 0,
           seen: false,
         },
         click: {
@@ -295,6 +291,8 @@
             el.style.fontWeight = 'bold';
           } else if (name === 'i') {
             el.style.fontStyle = 'italic';
+          } else if (name === 'cat') {
+            el.classList.add('cat');
           } else if (name === 'eye') {
             el.classList.add('eye');
           } else if (name === 'pixels') {
@@ -324,22 +322,12 @@
       const animateGrid = (t) => {
         const {grid} = state;
         if (t > grid.nextFrameTime) {
-          updateMouseVelocity();
           evolveChars();
           grid.chars.forEach(updateCharElementPosition);
           grid.nextFrameTime = t + config.intervalMs;
           grid.frame++;
         }
         requestAnimationFrame(animateGrid);
-      }
-
-      const updateMouseVelocity = () => {
-        state.mouse.velocityX *= 0.9;
-        state.mouse.velocityY *= 0.9;
-        state.mouse.velocityX += state.mouse.x - state.mouse.prevX;
-        state.mouse.velocityY += state.mouse.y - state.mouse.prevY;
-        state.mouse.prevX = state.mouse.x;
-        state.mouse.prevY = state.mouse.y;
       }
 
       const evolveChars = () => {
@@ -368,7 +356,7 @@
 
           if (isAfterFinalFrame && char.tags.some(tag => tag.name === 'eye')) {
             setCatEyes(config.catEyes.poked);
-            state.cat.lastPokeCatTime = t;
+            state.cat.lastPokeCatTime = Date.now();
           }
         }
 
@@ -381,21 +369,6 @@
           // Add a bit of randomness to help not get stuck
           return distB - distA + sample.uniform(-3, 3);
         });
-
-        // Freeze links when mouse is nearby so it's easier to click on them. A bit hacky but works.
-        let minLinkDistance = Infinity;
-        for (const char of sortedChars) {
-          const mouseVector = {
-            x: state.mouse.x / charWidth - char.x,
-            y: state.mouse.y / charHeight - char.y,
-          }
-          const mouseDist = Math.hypot(mouseVector.x, mouseVector.y);
-          const isLink = char.tags.some(tag => tag.name === 'link');
-          if (isAfterFinalFrame && isLink && char.finalY === char.y && char.finalX === char.x && mouseDist < 0.05 * numColumns) {
-            frozenPositions.add(`${char.y},${char.x}`);
-            minLinkDistance = Math.min(minLinkDistance, mouseDist);
-          }
-        }
 
         for (const char of sortedChars) {
           // If the character is frozen, don't move it
@@ -425,19 +398,16 @@
             moveVector.y += w * -centerVector.x / centerDistance;
           }
 
-          // Pull towards mouse position. Don't do this on mobile.
+          // Pull towards mouse position
           const mouseVector = {
             x: state.mouse.x / charWidth - char.x,
             y: state.mouse.y / charHeight - char.y,
           }
           const mouseDistance = Math.hypot(mouseVector.x, mouseVector.y);
-          if (mouse.seen && mouseDistance / 6 < (1 - char.weight) * Math.min(1, minLinkDistance / 0.02 / numColumns)) {
-            const mouseSpeed = Math.hypot(mouse.velocityX / charWidth, mouse.velocityY / charHeight);
-            const w = (1 - char.weight) * Math.min(1, mouseSpeed / 100);
-            moveVector.x += 1 * w * mouseVector.x / mouseDistance;
-            moveVector.y += 1 * w * mouseVector.y / mouseDistance;
-            moveVector.x += 300 * w * mouse.velocityX / mouseSpeed;
-            moveVector.y += 300 * w * mouse.velocityY / mouseSpeed;
+          const isPixels = char.tags.some(tag => tag.name === 'pixels');
+          if (isPixels && mouse.seen && mouseDistance / 8 < (1 - char.weight)) {
+            moveVector.x += (1 - char.weight) * mouseVector.x / mouseDistance;
+            moveVector.y += (1 - char.weight) * mouseVector.y / mouseDistance;
           }
 
           // If clicked recently, do an explosion effect
@@ -448,7 +418,7 @@
               y: state.click.y / charHeight - char.y,
             }
             const clickDistance = Math.hypot(clickVector.x, clickVector.y);
-            const w = Math.pow(Math.max(0, 1 - clickDistance / 50), 2);
+            const w = Math.pow(Math.max(0, 1 - clickDistance / 50), 0.5);
 
             // Curl counter-clockwise around click position
             moveVector.x += -100 * w * clickVector.y / clickDistance;
@@ -502,7 +472,7 @@
       const animateCat = t => {
         const {cat} = state;
         const {open, closed} = config.catEyes;
-        if (t > cat.nextFrameTime + config.intervalMs && t > cat.lastPokeCatTime + 1500) {
+        if (t > cat.nextFrameTime + config.intervalMs && Date.now() > cat.lastPokeCatTime + 1000) {
           cat.areEyesOpen = !cat.areEyesOpen;
 
           // Update all eye elements
@@ -537,11 +507,17 @@
 
       const startDance = () => {
         document.body.style.background = config.backgroundColor;
+
         document.addEventListener('mousemove', (e) => {
           state.mouse.x = e.pageX;
           state.mouse.y = e.pageY;
           state.mouse.seen = true;
+          if (e.target.closest('.cat')) {
+            setCatEyes(config.catEyes.poked);
+            state.cat.lastPokeCatTime = Date.now();
+          }
         });
+
         document.addEventListener('click', function(event) {
           if (!event.target.closest('a')) {
             state.click.x = event.clientX;
