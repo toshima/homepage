@@ -1,6 +1,5 @@
 """
-This script takes an image and compresses it by taking every `stride_x` pixel horizontally and every `stride_y` pixel vertically.
-It then compresses it by indexing each pixel and taking the ascii character of the index.
+Convert an image to a compressed string so that it can be pasted into index.html.
 """
 
 import json
