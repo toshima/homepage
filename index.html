@@ -1,8 +1,3 @@
-<!--
-TODO:
-- Refactor - have a single CONFIG object and state object
--->
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -30,7 +25,6 @@ TODO:
       min-height: 100vh;
       overflow: auto;
       line-height: 1.35;
-      letter-spacing: 0;
       white-space: pre;
     }
     #container a {
@@ -46,98 +40,7 @@ TODO:
 <body>
   <div id="container"></div>
   <script>
-    const dance = () => {
-      // Update these if font size or font family changes.
-      // Couldn't find a reliable way to calculate them on-the-fly.
-      const FONT_SIZE = 15;
-      const CHAR_WIDTH = FONT_SIZE * 0.6;
-      const CHAR_HEIGHT = FONT_SIZE * 1.35;
-
-      // Settings
-      const BACKGROUND_COLOR = "#ffebf4";
-      const SPACING = 3; // Minimum number of spaces between text blocks
-      const MARGIN_TOP = 0.03; // Margin at top of page
-      const MARGIN_BOTTOM = 0.02; // Margin at bottom of page
-      const MARGIN_SIDE = 0.05; // Margin on each side of page
-      const NUM_STEPS = 200; // Number of steps in the animation. Determines how long the animation lasts.
-      const INTERVAL_MS = 15; // Interval between steps in the animation. Determines how fast the characters move.
-      const EVOLVE_FRAMES = 400;
-
-      const PFP_IMAGE = [
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#9c9c9c", "#000000", "#000000", "#000000", "#000000", "#adbadd", "#adbadd", "#000000", "#000000", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#424755", "#adbadd", "#adbadd", "#adbadd", "#adbadd", "#3f4c77", "#3f4c77", "#3f4c77", "#adbadd", "#adbadd", "#000000", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#b1bee2", "#828fb5", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#42507d", "#0a0a0a", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#404d79", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3c4872", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#3f4d78", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#adbadd", "#adbadd", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3c4872", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#3f4d78", "#3f4c77", "#3f4c77", "#3f4c77", "#3e4b76", "#adbadd", "#adbadd", "#adbadd", "#adbadd", "#adbadd", "#adbadd", "#404d78", "#3f4c77", "#3f4c77", "#3c4872", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#3f4d78", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#adbadd", "#adbadd", "#adbadd", "#adbadd", "#adbadd", "#404d78", "#3f4c77", "#384571", "#a5b2d3", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#3f4c77", "#3f4c77", "#3f4c77", "#3f4c77", "#3d4a74", "#060709", "#060709", "#060709", "#060709", "#060709", "#060709", "#060709", "#060709", "#060709", "#020302", "#43507b", "#adbadd", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#3f4c77", "#3f4c77", "#3f4c77", "#28314c", "#060709", "#050608", "#1a1c20", "#4e4644", "#1a1c20", "#090a0b", "#090a0b", "#090a0b", "#090a0b", "#090a0b", "#090a0b", "#08090d", "#3f4c77", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#3f4c77", "#3f4c77", "#3f4c77", "#28314c", "#060709", "#37221d", "#060709", "#060709", "#060709", "#060709", "#060709", "#060709", "#060709", "#060709", "#060709", "#060709", "#060709", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#3f4c77", "#3f4c77", "#36211a", "#37221d", "#3a251f", "#dbc0b7", "#37221d", "#37221d", "#37221d", "#37221d", "#37221d", "#37221d", "#37221d", "#37221d", "#37221d", "#34201c", "#060709", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#3f4c77", "#3f4c77", "#36211a", "#765e58", "#d8bdb4", "#9e847b", "#453836", "#5a4b47", "#9e847b", "#947167", "#947167", "#604c47", "#453836", "#5c4d49", "#5c4d49", "#34201c", "#060709", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#3f4c77", "#36211b", "#ddc2b9", "#dabfb6", "#dabfb6", "#dabfb6", "#9e847b", "#9e847b", "#9e847b", "#dfc9c2", "#dfc9c2", "#9e847b", "#604c47", "#a58b81", "#9e847b", "#997f77", "#37221d", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#3f4c77", "#36211b", "#ddc2b9", "#dabfb6", "#dabfb6", "#dabfb6", "#dabfb6", "#9e847b", "#9e847b", "#dfc9c2", "#dfc9c2", "#9e847b", "#9e847b", "#9e847b", "#9a8077", "#d3b8af", "#37221d", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#3f4c77", "#36211b", "#ddc2b9", "#dabfb6", "#dabfb6", "#dabfb6", "#dabfb6", "#dabfb6", "#dabfb6", "#dfc9c2", "#dfc9c2", "#dabfb6", "#9e847b", "#e1c6bd", "#dabfb6", "#d3b8af", "#37221d", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#535e72", "#1f232c", "#37221c", "#ddc2b9", "#dabfb6", "#dabfb6", "#dabfb6", "#dabfb6", "#dabfb6", "#dfc9c2", "#dfc9c2", "#dfc9c2", "#dfc9c2", "#dabfb6", "#dabfb6", "#e3c8be", "#34201b", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#535e72", "#535e72", "#1f232c", "#1f232c", "#35211c", "#765e58", "#dabfb6", "#dabfb6", "#dabfb6", "#dabfb6", "#947167", "#947167", "#947167", "#947167", "#d9beb5", "#dabfb6", "#e3c8be", "#34201b", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#535e72", "#535e72", "#1f232c", "#1f232c", "#35211c", "#765e58", "#dabfb6", "#dabfb6", "#dabfb6", "#dabfb6", "#dabfb6", "#9e847b", "#604c47", "#9e847b", "#d9beb5", "#dabfb6", "#e3c8be", "#382420", "#535e72", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#000000", "#535e72", "#535e72", "#1f232c", "#1f232c", "#35211c", "#765e58", "#dabfb6", "#dabfb6", "#dabfb6", "#9e847b", "#9e847b", "#a57c76", "#a57975", "#9e847b", "#9e847b", "#e1c6bd", "#e3c8be", "#36221d", "#1f232c", "#535e72", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#000000", "#000000", "#000000", "#535e72", "#535e72", "#535e72", "#1f232c", "#1f232c", "#a0867c", "#765e56", "#3a251f", "#dbc0b7", "#604c47", "#774a49", "#774a49", "#ac676e", "#ac676e", "#774a49", "#604b47", "#311c17", "#38211c", "#21252e", "#535e72", "#535e72", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#000000", "#535e72", "#535e72", "#535e72", "#1f232c", "#535e72", "#1f232c", "#1f232c", "#a0867c", "#9e847b", "#9c8279", "#36211c", "#9e847b", "#9e847b", "#9e847b", "#604c47", "#604c47", "#9e847b", "#9e847b", "#2a1511", "#38211c", "#21252e", "#535e72", "#535e72", "#535e72", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#000000", "#535e72", "#535e72", "#535e72", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#50484a", "#9c8279", "#36211c", "#9e847b", "#dabfb6", "#dabfb6", "#9e847b", "#9e847b", "#dabfb6", "#38231e", "#65514c", "#634e48", "#21252e", "#535e72", "#535e72", "#535e72", "#000000", "#ffffff", "#ffffff", "#ffffff", "#ffffff"],
-        ["#ffffff", "#ffffff", "#000000", "#535e72", "#535e72", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#50484a", "#9e847b", "#9e847b", "#37221d", "#37221d", "#37221d", "#37221d", "#37221d", "#37221d", "#5f4b46", "#604c47", "#634e48", "#21252e", "#535e72", "#535e72", "#1f232c", "#535e72", "#000000", "#ffffff", "#ffffff", "#ffffff"],
-        ["#000000", "#000000", "#535e72", "#535e72", "#535e72", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#21242d", "#9e847b", "#9e847b", "#604c47", "#604c47", "#604c47", "#9e847b", "#9e847b", "#604c47", "#161d28", "#1f232c", "#21252e", "#535e72", "#1f232c", "#1f232c", "#535e72", "#1f232c", "#000000", "#000000", "#000000"],
-        ["#000000", "#000000", "#535e72", "#535e72", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1d222b", "#9e847b", "#9e847b", "#9e847b", "#9e847b", "#9e847b", "#9e847b", "#20242c", "#1f232c", "#1c1f27", "#505b6f", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#535e72", "#535e72", "#535e72"],
-        ["#000000", "#000000", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#9e847b", "#9e847b", "#9e847b", "#9e847b", "#604c47", "#1f232c", "#59657a", "#566176", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#1f232c", "#535e72", "#535e72", "#535e72"]
-      ];
-
-      // Characters for the cat's eyes
-      const CAT_EYE_OPEN = "•";
-      const CAT_EYE_CLOSED = "-";
-      const CAT_EYE_POKED = "0";
-
-      const SMALL_DISPLAY_WARNING = "[b]It looks like you're on mobile or have a small display. Fyi the animation looks best viewed on a computer with a larger display.[/b]\n\n";
-
-      // Website content
-      const CONTENT = `
-
-        Welcome to the personal homepage of [b]Takaki Oshima[/b].
-
-        ${window.innerWidth < 800 ? SMALL_DISPLAY_WARNING : ''}
-        [b]Work[/b]
-
-        I'm an independent researcher. My interests span a bunch of domains including
-         - Creative coding
-         - Automated market making protocols
-         - Quantitative trading and sports betting
-         - AI
-
-        In the past I worked as a SWE at [link https://google.com/]Google[/link] and as a quant trader at an HFT firm. I later cofounded a startup where I researched and built decentralized systems.
-
-
-        [b]About this website[/b]
-
-        This site is best viewed on a large display. It uses my favourite coding font, [link https://adobe-fonts.github.io/source-code-pro/]Source Code Pro[/link].
-
-        It takes inspiration from the work of generative artists like [link https://ertdfgcvb.xyz/]Andreas Gysin[/link] and more generally from the field of generative art.
-
-        The source code for this website can be found [link https://github.com/toshima/homepage]here[/link]. This site was last updated [i]March 2025[/i].
-
-
-        [b]Socials[/b]
-
-        I don't use social media much but I have accounts on [link https://github.com/toshima/]Github[/link] and (less actively) on [link https://x.com/takakioshima/]Twitter[/link] and [link https://www.linkedin.com/in/takakioshima/]LinkedIn[/link].
-
-
-         /\\_/\\
-        ( [eye]${CAT_EYE_CLOSED}[/eye].[eye]${CAT_EYE_CLOSED}[/eye] )
-           ^
-      `;
-
+    document.fonts.ready.then(() => {
       // Remove leading whitespace from each line
       const dedent = (text) => {
         const lines = text.split('\n');
@@ -148,8 +51,102 @@ TODO:
         return lines.map(line => line.slice(indentLength)).join('\n');
       }
 
-      // Convert pixels (a 2D array of RGB values) into an array of characters with formatting tags
-      const getCharsFromPixels = pixels => {
+      const config = {
+        fontSize: 15,
+        charWidth: 15 * 0.6,
+        charHeight: 15 * 1.35,
+        backgroundColor: "#ffebf4",
+        maxFrame: 400, // Number of frames to evolve the characters for.
+        intervalMs: 15, // Interval between steps in the animation. Determines how fast the characters move.
+        content: dedent(`
+
+          Welcome to the personal homepage of [b]Takaki Oshima[/b].
+
+
+          [b]Work[/b]
+
+          I'm an independent researcher. My interests span a bunch of domains including
+          - Creative coding
+          - Automated market making protocols
+          - Quantitative trading and sports betting
+          - AI
+
+          In the past I worked as a SWE at [link https://google.com/]Google[/link] and as a quant trader at an HFT firm. I later cofounded a startup where I researched and built decentralized systems.
+
+
+          [b]About this website[/b]
+
+          This site is best viewed on a large display. It uses my favourite coding font, [link https://adobe-fonts.github.io/source-code-pro/]Source Code Pro[/link].
+
+          It takes inspiration from the work of generative artists like [link https://ertdfgcvb.xyz/]Andreas Gysin[/link] and more generally from the field of generative art.
+
+          The source code for this website can be found [link https://github.com/toshima/homepage]here[/link]. This site was last updated [i]March 2025[/i].
+
+
+          [b]Socials[/b]
+
+          I don't use social media much but I have accounts on [link https://github.com/toshima/]Github[/link] and (less actively) on [link https://x.com/takakioshima/]Twitter[/link] and [link https://www.linkedin.com/in/takakioshima/]LinkedIn[/link].
+
+
+           /\\_/\\
+          ( [eye]-[/eye].[eye]-[/eye] )
+             ^
+        `),
+        pfpImage: {
+          columns: 32,
+          colors: ['#000000', '#020302', '#050608', '#060709', '#08090d', '#090a0b', '#0a0a0a', '#161d28', '#1a1c20', '#1c1f27', '#1d222b', '#1f232c', '#20242c', '#21242d', '#21252e', '#28314c', '#2a1511', '#311c17', '#34201b', '#34201c', '#35211c', '#36211a', '#36211b', '#36211c', '#36221d', '#37221c', '#37221d', '#38211c', '#38231e', '#382420', '#384571', '#3a251f', '#3c4872', '#3d4a74', '#3e4b76', '#3f4c77', '#3f4d78', '#404d78', '#404d79', '#424755', '#42507d', '#43507b', '#453836', '#4e4644', '#50484a', '#505b6f', '#535e72', '#566176', '#59657a', '#5a4b47', '#5c4d49', '#5f4b46', '#604b47', '#604c47', '#634e48', '#65514c', '#765e56', '#765e58', '#774a49', '#828fb5', '#947167', '#997f77', '#9a8077', '#9c8279', '#9c9c9c', '#9e847b', '#a0867c', '#a57975', '#a57c76', '#a58b81', '#a5b2d3', '#ac676e', '#adbadd', '#b1bee2', '#d3b8af', '#d8bdb4', '#d9beb5', '#dabfb6', '#dbc0b7', '#ddc2b9', '#dfc9c2', '#e1c6bd', '#e3c8be', '#ffffff'],
+          image: 'SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS\x00\x00SSSSSSSSSSSSSSSSSSSSSSSSS@\x00\x00\x00\x00HH\x00\x00\x00SSSSSSSSSSSSSSSSSSSSS\x00\'HHHH###HH\x00\x00SSSSSSSSSSSSSSSSSS\x00I;##########(\x06SSSSSSSSSSSSSSSSS\x00&############ \x00SSSSSSSSSSSSSSS\x00$#######HH#### \x00SSSSSSSSSSSSSSS\x00$###"HHHHHH%## \x00SSSSSSSSSSSSSSS\x00$#####HHHHH%#\x1eF\x00SSSSSSSSSSSSSS\x00####!\x03\x03\x03\x03\x03\x03\x03\x03\x03\x01)H\x00SSSSSSSSSSSSS\x00###\x0f\x03\x02\x08+\x08\x05\x05\x05\x05\x05\x05\x04#\x00SSSSSSSSSSSSS\x00###\x0f\x03\x1a\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x00SSSSSSSSSSSSS\x00##\x15\x1a\x1fN\x1a\x1a\x1a\x1a\x1a\x1a\x1a\x1a\x1a\x13\x03\x00SSSSSSSSSSSSS\x00##\x159KA*1A<<5*22\x13\x03\x00SSSSSSSSSSSSS\x00#\x16OMMMAAAPPA5EA=\x1a\x00SSSSSSSSSSSSS\x00#\x16OMMMMAAPPAAA>J\x1a\x00SSSSSSSSSSSSS\x00#\x16OMMMMMMPPMAQMJ\x1a\x00SSSSSSSSSSSS\x00.\x0b\x19OMMMMMPPPPMMR\x12\x00SSSSSSSSSSSS\x00..\x0b\x0b\x149MMMM<<<<LMR\x12\x00SSSSSSSSSSSS\x00..\x0b\x0b\x149MMMMMA5ALMR\x1d.\x00SSSSSSSSSSS\x00..\x0b\x0b\x149MMMAADCAAQR\x18\x0b.\x00SSSSSSS\x00\x00\x00...\x0b\x0bB8\x1fN5::GG:4\x11\x1b\x0e..\x00SSSSSSS\x00...\x0b.\x0b\x0bBA?\x17AAA55AA\x10\x1b\x0e...\x00SSSSSS\x00...\x0b\x0b\x0b\x0b\x0b,?\x17AMMAAM\x1c76\x0e...\x00SSSSSS\x00..\x0b\x0b\x0b\x0b\x0b\x0b,AA\x1a\x1a\x1a\x1a\x1a\x1a356\x0e..\x0b.\x00SSS\x00\x00...\x0b\x0b\x0b\x0b\x0b\x0b\x0b\rAA555AA5\x07\x0b\x0e.\x0b\x0b.\x0b\x00\x00\x00\x00\x00..\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\nAAAAAA\x0c\x0b\t-\x0b\x0b\x0b\x0b\x0b...\x00\x00\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0bAAAA5\x0b0/\x0b\x0b\x0b\x0b\x0b\x0b...',
+        },
+        catEyes: {
+          open: '•',
+          closed: '-',
+          poked: '0',
+        },
+      };
+
+      const state = {
+        grid: {
+          chars: [],
+          numRows: 0,
+          numColumns: 0,
+          frame: 0,
+          nextFrameTime: 0,
+        },
+        cat: {
+          areEyesOpen: false,
+          lastPokeCatTime: 0,
+          nextFrameTime: 0,
+        },
+        mouse: {
+          x: 0,
+          y: 0,
+          prevX: 0,
+          prevY: 0,
+          velocityX: 0,
+          velocityY: 0,
+          seen: false,
+        },
+        click: {
+          x: 0,
+          y: 0,
+          lastClickTime: 0,
+        },
+      };
+
+      // Decode a pixel image into a 2D array of hex strings
+      // `colors` is an array of hex colors, and `image` is a string of characters whose ASCII values map to the colors
+      // `columns` is the number of columns in the image
+      const decodeImage = ({columns, colors, image}) => {
+        const decoded = image.split('').map(c => colors[c.charCodeAt(0)]);
+        const pixels = [];
+        for (let i = 0; i < decoded.length; i += columns) {
+          pixels.push(decoded.slice(i, i + columns));
+        }
+        return pixels;
+      }
+
+      // Convert pixels (a 2D array of hex strings) into an array of characters with formatting tags
+      const getCharsFromImage = (pixels) => {
         const chars = [];
         for (let y = 0; y < pixels.length - 1; y += 4) {
           for (let x = 0; x < pixels[y].length; x += 2) {
@@ -159,7 +156,7 @@ TODO:
             chars.push({
               id: `pixels-${y}-${x}`,
               char: ' ',
-              tags: [{name: 'pixels', args: colors.map(c => c === "#ffffff" ? BACKGROUND_COLOR : c)}]
+              tags: [{name: 'pixels', args: colors.map(c => c === "#ffffff" ? config.backgroundColor : c)}]
             });
           }
           chars.push({
@@ -234,79 +231,123 @@ TODO:
         return lines;
       };
 
-      const populateDOMElements = (chars) => {
-        const container = document.getElementById('container');
-        for (const char of chars) {
-          const el = document.createElement('a');
-          el.style.position = 'absolute';
-          el.textContent = char.char;
-          el.id = `char-${char.id}`;
-          el.style.top = `${char.y * CHAR_HEIGHT}px`;
-          el.style.left = `${char.x * CHAR_WIDTH}px`;
-          el.style.minWidth = `${CHAR_WIDTH}px`;
-          el.style.minHeight = `${CHAR_HEIGHT}px`;
+      const generateChars = () => {
+        // Calculate number of columns and min rows based on window size
+        // Subtract 2 so that the horizontal scrollbar doesn't show up
+        const minRows = Math.floor(window.innerHeight / config.charHeight);
+        const numColumns = Math.floor(window.innerWidth / config.charWidth) - 2;
 
-          for (const {name, args} of char.tags) {
-            if (name === 'link') {
-              el.href = args[0];
-            } else if (name === 'b') {
-              el.style.fontWeight = 'bold';
-            } else if (name === 'i') {
-              el.style.fontStyle = 'italic';
-            } else if (name === 'eye') {
-              el.classList.add('eye');
-            } else if (name === 'pixels') {
-              el.classList.add('pixels');
+        // Parse the website text and wrap it into lines
+        let chars = [
+          ...getCharsFromImage(decodeImage(config.pfpImage)),
+          ...getCharsFromText(config.content),
+        ];
 
-              // Define colors
-              args.forEach(color => {
-                const colorElement = document.createElement('a');
-                colorElement.style.background = color;
-                el.appendChild(colorElement);
-              });
-            }
+        // Calculate number of columns to wrap text into
+        // It's between 60% and 80% depending on the window width
+        const sizeWeight = Math.min(1, Math.max(0, (window.innerWidth - 600) / 1000));
+        const numWrapColumns = Math.ceil(numColumns * (0.6 * sizeWeight + 0.8 * (1 - sizeWeight)));
+
+        // Wrap the text into lines and attach final positions
+        const lines = wrapText(chars, numWrapColumns);
+        const numRows = Math.max(minRows, lines.length + 8);
+        const startY = Math.max(5, Math.floor((numRows - lines.length) * 0.4));
+        const startX = Math.floor((numColumns - numWrapColumns) * 0.5);
+        for (let y = 0; y < lines.length; y++) {
+          for (let x = 0; x < lines[y].length; x++) {
+            const char = lines[y][x];
+            char.finalY = y + startY;
+            char.finalX = x + startX;
           }
-
-          container.appendChild(el);
         }
 
-        // Add invisible span in the bottom right corner so the container size is fixed
-        const cornerElement = document.createElement('a');
-        cornerElement.style.position = 'absolute';
-        cornerElement.style.top = `${(numRows-1) * CHAR_HEIGHT}px`;
-        cornerElement.style.left = `${(numColumns-1) * CHAR_WIDTH}px`;
-        cornerElement.textContent = ' ';
-        container.appendChild(cornerElement);
+        // Remove chars not assigned a final position, such as spaces that were wrapped
+        chars = chars.filter(c => c.finalX !== undefined && c.finalY !== undefined);
+
+        // Remove whitespace chars
+        chars = chars.filter(c => (c.char !== ' ' && c.char !== '\n') || c.tags.length > 0);
+
+        // Set initial positions and weights
+        for (const char of chars) {
+          char.y = sample.uniformInt(0, numRows);
+          char.x = sample.uniformInt(0, numColumns);
+          char.weight = sample.uniform(0, 1);
+        }
+
+        return {chars, numRows, numColumns};
       }
 
-      const animateChars = t => {
-        const t0 = performance.now();
-        if (t > charsState.nextFrameTime) {
+      const createCharElement = (char) => {
+        const {charWidth, charHeight} = config;
+        const el = document.createElement('a');
+        el.style.position = 'absolute';
+        el.style.top = `${char.y * charHeight}px`;
+        el.style.left = `${char.x * charWidth}px`;
+        el.style.minWidth = `${charWidth}px`;
+        el.style.minHeight = `${charHeight}px`;
+        el.textContent = char.char;
+        el.id = `char-${char.id}`;
+
+        for (const {name, args} of char.tags) {
+          if (name === 'link') {
+            el.href = args[0];
+          } else if (name === 'b') {
+            el.style.fontWeight = 'bold';
+          } else if (name === 'i') {
+            el.style.fontStyle = 'italic';
+          } else if (name === 'eye') {
+            el.classList.add('eye');
+          } else if (name === 'pixels') {
+            el.classList.add('pixels');
+            args.forEach(color => {
+              const colorElement = document.createElement('a');
+              colorElement.style.background = color;
+              el.appendChild(colorElement);
+            });
+          }
+        }
+        return el;
+      }
+
+      // Add invisible span in the bottom right corner so the container size is fixed
+      const createCornerElement = () => {
+        const {charWidth, charHeight} = config;
+        const {numRows, numColumns} = state.grid;
+        const corner = document.createElement('a');
+        corner.style.position = 'absolute';
+        corner.style.top = `${(numRows-1) * charHeight}px`;
+        corner.style.left = `${(numColumns-1) * charWidth}px`;
+        corner.textContent = ' ';
+        return corner;
+      }
+
+      const animateGrid = (t) => {
+        const {grid} = state;
+        if (t > grid.nextFrameTime) {
           updateMouseVelocity();
           evolveChars();
-          updateChars();
-          charsState.nextFrameTime = t + INTERVAL_MS;
-          charsState.frame++;
+          grid.chars.forEach(updateCharElementPosition);
+          grid.nextFrameTime = t + config.intervalMs;
+          grid.frame++;
         }
-        // if (charsState.frame % 100 === 0) {
-        //   console.log(`Frame: ${charsState.frame} | Time: ${(performance.now() - t0).toFixed(2)}ms`);
-        // }
-        requestAnimationFrame(animateChars);
+        requestAnimationFrame(animateGrid);
       }
 
       const updateMouseVelocity = () => {
-        mouseState.velocityX *= 0.9;
-        mouseState.velocityY *= 0.9;
-        mouseState.velocityX += mouseState.x - mouseState.prevX;
-        mouseState.velocityY += mouseState.y - mouseState.prevY;
-        mouseState.prevX = mouseState.x;
-        mouseState.prevY = mouseState.y;
+        state.mouse.velocityX *= 0.9;
+        state.mouse.velocityY *= 0.9;
+        state.mouse.velocityX += state.mouse.x - state.mouse.prevX;
+        state.mouse.velocityY += state.mouse.y - state.mouse.prevY;
+        state.mouse.prevX = state.mouse.x;
+        state.mouse.prevY = state.mouse.y;
       }
 
       const evolveChars = () => {
-        const {frame, chars} = charsState;
-        const t = Math.min(frame / EVOLVE_FRAMES, 1);
-        const isAfterFinalFrame = frame >= EVOLVE_FRAMES;
+        const {frame, chars, numRows, numColumns} = state.grid;
+        const {charWidth, charHeight, maxFrame} = config;
+        const {mouse} = state;
+        const t = Math.min(frame / maxFrame, 1);
+        const isAfterFinalFrame = frame >= maxFrame;
 
         // Map to look up chars by their position
         const positionMap = {};
@@ -318,7 +359,7 @@ TODO:
         // Indices of positions that have already moved
         const frozenPositions = new Set();
 
-        const moveChar = (char, y, x) => {
+        const moveChar = (char, {x, y}) => {
           positionMap[`${char.y},${char.x}`] = null;
           positionMap[`${y},${x}`] = char;
           frozenPositions.add(`${y},${x}`);
@@ -326,8 +367,8 @@ TODO:
           char.x = x;
 
           if (isAfterFinalFrame && char.tags.some(tag => tag.name === 'eye')) {
-            setCatEyes(CAT_EYE_POKED);
-            lastPokeCatTime = t;
+            setCatEyes(config.catEyes.poked);
+            state.cat.lastPokeCatTime = t;
           }
         }
 
@@ -338,107 +379,104 @@ TODO:
           const distB = Math.abs(b.finalY - b.y) + Math.abs(b.finalX - b.x);
 
           // Add a bit of randomness to help not get stuck
-          return distB - distA + sampleUniform(-3, 3);
+          return distB - distA + sample.uniform(-3, 3);
         });
 
-        // Freeze links when mouse is nearby
-        // A bit hacky but works
+        // Freeze links when mouse is nearby so it's easier to click on them. A bit hacky but works.
+        let minLinkDistance = Infinity;
         for (const char of sortedChars) {
-          const mouseDx = mouseState.x / CHAR_WIDTH - char.x;
-          const mouseDy = mouseState.y / CHAR_HEIGHT - char.y;
-          const mouseDist = Math.hypot(mouseDx, mouseDy);
-          if (
-            isAfterFinalFrame
-            && char.tags.some(tag => tag.name === 'link')
-            && char.finalY === char.y && char.finalX === char.x
-            && mouseDist < 0.05 * numColumns
-          ) {
+          const mouseVector = {
+            x: state.mouse.x / charWidth - char.x,
+            y: state.mouse.y / charHeight - char.y,
+          }
+          const mouseDist = Math.hypot(mouseVector.x, mouseVector.y);
+          const isLink = char.tags.some(tag => tag.name === 'link');
+          if (isAfterFinalFrame && isLink && char.finalY === char.y && char.finalX === char.x && mouseDist < 0.05 * numColumns) {
             frozenPositions.add(`${char.y},${char.x}`);
+            minLinkDistance = Math.min(minLinkDistance, mouseDist);
           }
         }
 
         for (const char of sortedChars) {
+          // If the character is frozen, don't move it
           if (frozenPositions.has(`${char.y},${char.x}`)) {
             continue;
           }
 
           // How much we want to move the character. We'll adjust this value throughout this function.
-          let deltaX = 0;
-          let deltaY = 0;
+          const moveVector = {x: 0, y: 0};
 
           // Pull towards final position. Starts at time 0.25 - 0.75 depending on weight and ends at time 1
-          const finalPullWeight = Math.max(0, (t - 0.75 + char.weight * 0.5) / 0.75);
-          deltaX += finalPullWeight * (char.finalX - char.x);
-          deltaY += finalPullWeight * (char.finalY - char.y);
-
-          // Add rotation around center. Ramps down from time 0 to time 0.8.
-          // Add some jitter to the center of rotation to help prevent characters from getting stuck in the middle.
-          const viewportCenterX = window.scrollX + window.innerWidth / 2;
-          const viewportCenterY = window.scrollY + window.innerHeight / 2;
-          const centerDx = viewportCenterX / CHAR_WIDTH - char.x + 0.1 * sampleGaussian();
-          const centerDy = viewportCenterY / CHAR_HEIGHT - char.y + 0.1 * sampleGaussian();
-          const centerDist = Math.hypot(centerDx, centerDy);
-          if (centerDist > 0) {
-            const centerRotationWeight = Math.max(0, 0.8 - t) / 0.8;
-            deltaX += centerRotationWeight * centerDy / centerDist;
-            deltaY += centerRotationWeight * -centerDx / centerDist;
+          {
+            const w = Math.max(0, (t - 0.75 + char.weight * 0.5) / 0.75);
+            moveVector.x += w * (char.finalX - char.x);
+            moveVector.y += w * (char.finalY - char.y);
           }
 
-          // Add mouse influence
-          const mouseDx = mouseState.x / CHAR_WIDTH - char.x;
-          const mouseDy = mouseState.y / CHAR_HEIGHT - char.y;
-          const mouseDist = Math.hypot(mouseDx, mouseDy);
-          const maxMouseDist = 6;
-          if (mouseDist / maxMouseDist < 1 - char.weight && mouseState.seen) { // Only affect characters within range
-            const mouseSpeed = Math.hypot(mouseState.velocityX / CHAR_WIDTH, mouseState.velocityY / CHAR_HEIGHT);
-            const mouseSpeedWeight = Math.min(mouseSpeed / 100, 1);
-            deltaX += 100 * (1 - char.weight) * mouseSpeedWeight / mouseDist * mouseDx;
-            deltaY += 100 * (1 - char.weight) * mouseSpeedWeight / mouseDist * mouseDy;
-
-            deltaX += 300 * (1 - char.weight) * mouseSpeedWeight * mouseState.velocityX / mouseSpeed;
-            deltaY += 300 * (1 - char.weight) * mouseSpeedWeight * mouseState.velocityY / mouseSpeed;
-
-            // Add clockwise curl effect around mouse
-            // deltaX += 20 * -mouseSpeedWeight * mouseDy / mouseDist; 
-            // deltaY += 20 * mouseSpeedWeight * mouseDx / mouseDist;
+          // Curl clockwise around viewport center
+          const centerVector = {
+            x: (window.scrollX + window.innerWidth / 2) / charWidth - char.x + 0.1 * sample.gaussian(),
+            y: (window.scrollY + window.innerHeight / 2) / charHeight - char.y + 0.1 * sample.gaussian(),
+          };
+          const centerDistance = Math.hypot(centerVector.x, centerVector.y);
+          if (centerDistance > 0) {
+            const w = Math.max(0, 0.8 - t) / 0.8;
+            moveVector.x += w * centerVector.y / centerDistance;
+            moveVector.y += w * -centerVector.x / centerDistance;
           }
 
-          // Explosion
-          // if (frame === Math.floor(0.5 * EVOLVE_FRAMES)) {
-          //   console.log('exploding');
-          //   char.driftX += -centerDx / centerDist;
-          //   char.driftY += -centerDy / centerDist;
-          // }
+          // Pull towards mouse position. Don't do this on mobile.
+          const mouseVector = {
+            x: state.mouse.x / charWidth - char.x,
+            y: state.mouse.y / charHeight - char.y,
+          }
+          const mouseDistance = Math.hypot(mouseVector.x, mouseVector.y);
+          if (mouse.seen && mouseDistance / 6 < (1 - char.weight) * Math.min(1, minLinkDistance / 0.1 / numColumns)) {
+            const mouseSpeed = Math.hypot(mouse.velocityX / charWidth, mouse.velocityY / charHeight);
+            const w = (1 - char.weight) * Math.min(1, mouseSpeed / 100);
+            moveVector.x += 100 * w * mouseVector.x / mouseDistance;
+            moveVector.y += 100 * w * mouseVector.y / mouseDistance;
+            moveVector.x += 300 * w * mouse.velocityX / mouseSpeed;
+            moveVector.y += 300 * w * mouse.velocityY / mouseSpeed;
+          }
 
-          // Drift
-          // const driftProb = 0.001;// * Math.max(0, 1 - t);
-          // if (Math.random() < driftProb && t < 1) {
-          //   char.driftX += Math.random() < 0.5 ? sampleUniform(-1, 1) : 0;
-          //   char.driftY += Math.random() < 0.5 ? sampleUniform(-1, 1) : 0;
-          // }
-          // deltaX += 100 * char.driftX;
-          // deltaY += 100 * char.driftY;
-          // char.driftX *= t < 1 ? 0.99 : 0.8;
-          // char.driftY *= t < 1 ? 0.99 : 0.8;
+          // If clicked recently, do an explosion effect
+          if (Date.now() - state.click.lastClickTime < 3000 * (1 - char.weight)) {
+            const clickVector = {
+              x: state.click.x / charWidth - char.x,
+              y: state.click.y / charHeight - char.y,
+            }
+            const clickDistance = Math.hypot(clickVector.x, clickVector.y);
+            const w = Math.max(0, 1 - clickDistance / 100);
 
-          // If it doesn't move much, just skip and mark it as frozen
-          if (Math.hypot(deltaX, deltaY) < 0.001) {
+            // Push away from click position
+            moveVector.x += -10 * w * clickVector.x / clickDistance;
+            moveVector.y += -10 * w * clickVector.y / clickDistance;
+
+            // Curl counter-clockwise around click position
+            moveVector.x += -30 * w * clickVector.y / clickDistance;
+            moveVector.y += 30 * w * clickVector.x / clickDistance;
+          }
+
+          // If the character is not moving, freeze it
+          if (Math.hypot(moveVector.x, moveVector.y) < 0.001) {
             frozenPositions.add(`${char.y},${char.x}`);
             continue;
           }
 
           // Move character one step in the direction of the force, adding a bit of randomness
-          const theta = Math.atan2(deltaY, deltaX) + sampleUniform(-Math.PI / 4, Math.PI / 4);
-          const diagonalMoveAllowed = true;
-          const angleStep = diagonalMoveAllowed ? Math.PI / 4 : Math.PI / 2;
+          const theta = Math.atan2(moveVector.y, moveVector.x) + sample.uniform(-Math.PI / 4, Math.PI / 4);
+          const angleStep = Math.PI / 4;
           const discretizedTheta = Math.round(theta / angleStep) * angleStep;
 
           // Calculate direction of movement based on theta
-          const newY = (char.y + Math.round(Math.sin(discretizedTheta)) + numRows) % numRows;
-          const newX = (char.x + Math.round(Math.cos(discretizedTheta)) + numColumns) % numColumns;
+          const newPosition = {
+            x: (char.x + Math.round(Math.cos(discretizedTheta)) + numColumns) % numColumns,
+            y: (char.y + Math.round(Math.sin(discretizedTheta)) + numRows) % numRows,
+          }
 
           // If there is a character and it has already moved, don't move this character
-          const key = `${newY},${newX}`;
+          const key = `${newPosition.y},${newPosition.x}`;
           if (frozenPositions.has(key)) {
             continue;
           }
@@ -447,39 +485,34 @@ TODO:
           // Swap positions with target character if it exists
           const targetChar = positionMap[key];
           if (targetChar) {
-            moveChar(targetChar, char.y, char.x);
+            moveChar(targetChar, char);
           }
-
-          moveChar(char, newY, newX);
+          moveChar(char, newPosition);
         }
       };
 
-      const updateChars = () => {
-        const container = document.getElementById('container');
-        for (const char of charsState.chars) {
-          const span = document.getElementById(`char-${char.id}`);
-          span.style.top = `${char.y * CHAR_HEIGHT}px`;
-          span.style.left = `${char.x * CHAR_WIDTH}px`;
-        }
+      const updateCharElementPosition = ({x, y, id}) => {
+        const span = document.getElementById(`char-${id}`);
+        span.style.top = `${y * config.charHeight}px`;
+        span.style.left = `${x * config.charWidth}px`;
       }
 
       // Make the cat's eyes blink
       const animateCat = t => {
-        if (t > catState.nextFrameTime + INTERVAL_MS && t > catState.lastPokeCatTime + 1500) {
-          catState.catEyesOpen = !catState.catEyesOpen;
+        const {cat} = state;
+        const {open, closed} = config.catEyes;
+        if (t > cat.nextFrameTime + config.intervalMs && t > cat.lastPokeCatTime + 1500) {
+          cat.areEyesOpen = !cat.areEyesOpen;
 
           // Update all eye elements
-          const eye = catState.catEyesOpen ? CAT_EYE_OPEN : CAT_EYE_CLOSED;
-          setCatEyes(eye);
+          setCatEyes(cat.areEyesOpen ? open : closed);
 
           // Wait a random log-normally distributed length of time
           // Eyes stay open longer than they stay closed
-          const waitSd = 0.7;
-          const waitMultiplier = catState.catEyesOpen ? 2 : 0.15;
-          const wait = Math.exp(waitSd * sampleGaussian()) * waitMultiplier * 1000;
-          catState.nextFrameTime = t + wait;
+          const multiplier = cat.areEyesOpen ? 2 : 0.15;
+          const wait = Math.exp(0.7 * sample.gaussian()) * multiplier * 1000;
+          cat.nextFrameTime = t + wait;
         }
-
         requestAnimationFrame(animateCat);
       }
 
@@ -490,102 +523,50 @@ TODO:
         });
       }
 
-      // Random sampling functions
-      const sampleUniform = (min, max) => min + Math.random() * (max - min);
-      const sampleUniformInt = (min, max) => Math.floor(sampleUniform(min, max + 1));
-      const sampleExponential = lambda => -Math.log(Math.random()) / lambda;
-
-      // Box-Muller transform for sampling from a Gaussian distribution
-      const sampleGaussian = () => {
-        const r = Math.sqrt(sampleExponential(2));
-        const theta = 2 * Math.PI * Math.random();
-        return r * Math.cos(theta);
+      const sample = {
+        uniform: (min, max) => min + Math.random() * (max - min),
+        uniformInt: (min, max) => Math.floor(sample.uniform(min, max + 1)),
+        exponential: lambda => -Math.log(Math.random()) / lambda,
+        gaussian: () => {
+          const r = Math.sqrt(sample.exponential(2));
+          const theta = 2 * Math.PI * Math.random();
+          return r * Math.cos(theta);
+        },
       }
 
-      // Set background color
-      document.body.style.background = BACKGROUND_COLOR;
+      const startDance = () => {
+        document.body.style.background = config.backgroundColor;
+        document.addEventListener('mousemove', (e) => {
+          state.mouse.x = e.pageX;
+          state.mouse.y = e.pageY;
+          state.mouse.seen = true;
+        });
+        document.addEventListener('click', function(event) {
+          if (!event.target.closest('a')) {
+            state.click.x = event.clientX;
+            state.click.y = event.clientY;
+            state.click.lastClickTime = Date.now();
+          }
+        });
 
-      // Mouse state
-      const mouseState = {
-        x: 0,
-        y: 0,
-        prevX: 0,
-        prevY: 0,
-        velocityX: 0,
-        velocityY: 0,
-        seen: false
-      };
-      document.addEventListener('mousemove', (e) => {
-        mouseState.x = e.pageX;
-        mouseState.y = e.pageY;
-        mouseState.seen = true;
-      });
+        // Generate characters and update state
+        const {chars, numRows, numColumns} = generateChars();
+        state.grid.numRows = numRows;
+        state.grid.numColumns = numColumns;
+        state.grid.chars = chars;
 
-      // Calculate number of columns and min rows based on window size
-      // Subtract 2 so that the horizontal scrollbar doesn't show up
-      const minRows = Math.floor(window.innerHeight / CHAR_HEIGHT);
-      const numColumns = Math.floor(window.innerWidth / CHAR_WIDTH) - 2;
+        // Create DOM elements
+        const container = document.getElementById('container');
+        const elements = [...chars.map(createCharElement), createCornerElement()];
+        elements.forEach(el => container.appendChild(el));
 
-      // Parse the website text and wrap it into lines
-      let chars = [
-        ...getCharsFromPixels(PFP_IMAGE),
-        ...getCharsFromText(dedent(CONTENT))
-      ];
-
-      // Calculate number of columns to wrap text into
-      // It's between 60% and 80% depending on the window width
-      const sizeWeight = Math.min(1, Math.max(0, (window.innerWidth - 600) / 1000));
-      const numWrapColumns = Math.ceil(numColumns * (0.6 * sizeWeight + 0.8 * (1 - sizeWeight)));
-
-      // Wrap the text into lines and attach final positions
-      const lines = wrapText(chars, numWrapColumns);
-      const numRows = Math.max(minRows, lines.length + 8);
-      const startY = Math.max(5, Math.floor((numRows - lines.length) * 0.4));
-      const startX = Math.floor((numColumns - numWrapColumns) * 0.5);
-      for (let y = 0; y < lines.length; y++) {
-        for (let x = 0; x < lines[y].length; x++) {
-          const char = lines[y][x];
-          char.finalY = y + startY;
-          char.finalX = x + startX;
-        }
-      }
-
-      // Remove chars not assigned a final position, such as spaces that were wrapped
-      chars = chars.filter(c => c.finalX !== undefined && c.finalY !== undefined);
-
-      // Remove whitespace chars
-      chars = chars.filter(c => (c.char !== ' ' && c.char !== '\n') || c.tags.length > 0);
-
-      // Set initial positions and weights
-      for (const char of chars) {
-        char.y = sampleUniformInt(0, numRows);
-        char.x = sampleUniformInt(0, numColumns);
-        char.weight = sampleUniform(0, 1);
-        char.driftY = 0;
-        char.driftX = 0;
-      }
-
-      const charsState = {
-        frame: 0,
-        nextFrameTime: 0,
-        chars,
-        minRows,
-        numColumns,
-        numWrapColumns,
-      }
-
-      const catState = {
-        nextFrameTime: 0,
-        catEyesOpen: false,
-        lastPokeCatTime: 0,
+        // Start animations
+        requestAnimationFrame(animateGrid);
+        requestAnimationFrame(animateCat);
       };
 
-      populateDOMElements(chars);
-      requestAnimationFrame(animateChars);
-      requestAnimationFrame(animateCat);
-    }
-
-    document.fonts.ready.then(dance);
+      startDance();
+    });
   </script>
 </body>
 </html>
