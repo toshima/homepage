@@ -431,31 +431,32 @@
             y: state.mouse.y / charHeight - char.y,
           }
           const mouseDistance = Math.hypot(mouseVector.x, mouseVector.y);
-          if (mouse.seen && mouseDistance / 6 < (1 - char.weight) * Math.min(1, minLinkDistance / 0.1 / numColumns)) {
+          if (mouse.seen && mouseDistance / 6 < (1 - char.weight) * Math.min(1, minLinkDistance / 0.02 / numColumns)) {
             const mouseSpeed = Math.hypot(mouse.velocityX / charWidth, mouse.velocityY / charHeight);
             const w = (1 - char.weight) * Math.min(1, mouseSpeed / 100);
-            moveVector.x += 100 * w * mouseVector.x / mouseDistance;
-            moveVector.y += 100 * w * mouseVector.y / mouseDistance;
+            moveVector.x += 1 * w * mouseVector.x / mouseDistance;
+            moveVector.y += 1 * w * mouseVector.y / mouseDistance;
             moveVector.x += 300 * w * mouse.velocityX / mouseSpeed;
             moveVector.y += 300 * w * mouse.velocityY / mouseSpeed;
           }
 
           // If clicked recently, do an explosion effect
-          if (Date.now() - state.click.lastClickTime < 3000 * (1 - char.weight)) {
+          const timeSinceLastClick = Date.now() - state.click.lastClickTime;
+          if (timeSinceLastClick < 3000 * (1 - char.weight)) {
             const clickVector = {
               x: state.click.x / charWidth - char.x,
               y: state.click.y / charHeight - char.y,
             }
             const clickDistance = Math.hypot(clickVector.x, clickVector.y);
-            const w = Math.max(0, 1 - clickDistance / 100);
-
-            // Push away from click position
-            moveVector.x += -10 * w * clickVector.x / clickDistance;
-            moveVector.y += -10 * w * clickVector.y / clickDistance;
+            const w = Math.pow(Math.max(0, 1 - clickDistance / 50), 2);
 
             // Curl counter-clockwise around click position
-            moveVector.x += -30 * w * clickVector.y / clickDistance;
-            moveVector.y += 30 * w * clickVector.x / clickDistance;
+            moveVector.x += -100 * w * clickVector.y / clickDistance;
+            moveVector.y += 100 * w * clickVector.x / clickDistance;
+
+            // Push away from click position
+            moveVector.x += -20 * w * clickVector.x / clickDistance;
+            moveVector.y += -20 * w * clickVector.y / clickDistance;
           }
 
           // If the character is not moving, freeze it
