@@ -372,12 +372,11 @@ TODO:
           deltaY += finalPullWeight * (char.finalY - char.y);
 
           // Add rotation around center. Ramps down from time 0 to time 0.8.
-          // const centerDx = numColumns / 2 - char.x;
-          // const centerDy = minRows / 2 - char.y;
+          // Add some jitter to the center of rotation to help prevent characters from getting stuck in the middle.
           const viewportCenterX = window.scrollX + window.innerWidth / 2;
           const viewportCenterY = window.scrollY + window.innerHeight / 2;
-          const centerDx = viewportCenterX / CHAR_WIDTH - char.x;
-          const centerDy = viewportCenterY / CHAR_HEIGHT - char.y;
+          const centerDx = viewportCenterX / CHAR_WIDTH - char.x + 0.1 * sampleGaussian();
+          const centerDy = viewportCenterY / CHAR_HEIGHT - char.y + 0.1 * sampleGaussian();
           const centerDist = Math.hypot(centerDx, centerDy);
           if (centerDist > 0) {
             const centerRotationWeight = Math.max(0, 0.8 - t) / 0.8;
