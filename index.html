@@ -35,12 +35,6 @@
       grid-template-columns: repeat(2, 1fr);
       grid-template-rows: repeat(4, 1fr);
     }
-    .spell {
-      text-decoration: underline;
-    }
-    .spell:hover {
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
@@ -84,9 +78,9 @@
 
           The source code for this site can be found [link https://github.com/toshima/homepage]here[/link]. It takes inspiration from the work of generative artists like [link https://ertdfgcvb.xyz/]Andreas Gysin[/link].
 
-          Click [spell]here[/spell] to invoke an [i]ancient spell[/i].
+          Press S on your keyboard to toggle on/off a [i]mysterious power[/i].
 
-          Last updated [i]March 2025[/i]. [eye]-[/eye].[eye]-[/eye]
+          Last updated [i]March 2025[/i].
 
 
           [b]Socials[/b]
@@ -99,11 +93,6 @@
           colors: ['#000000', '#020302', '#050608', '#060709', '#08090d', '#090a0b', '#0a0a0a', '#161d28', '#1a1c20', '#1c1f27', '#1d222b', '#1f232c', '#20242c', '#21242d', '#21252e', '#28314c', '#2a1511', '#311c17', '#34201b', '#34201c', '#35211c', '#36211a', '#36211b', '#36211c', '#36221d', '#37221c', '#37221d', '#38211c', '#38231e', '#382420', '#384571', '#3a251f', '#3c4872', '#3d4a74', '#3e4b76', '#3f4c77', '#3f4d78', '#404d78', '#404d79', '#424755', '#42507d', '#43507b', '#453836', '#4e4644', '#50484a', '#505b6f', '#535e72', '#566176', '#59657a', '#5a4b47', '#5c4d49', '#5f4b46', '#604b47', '#604c47', '#634e48', '#65514c', '#765e56', '#765e58', '#774a49', '#828fb5', '#947167', '#997f77', '#9a8077', '#9c8279', '#9c9c9c', '#9e847b', '#a0867c', '#a57975', '#a57c76', '#a58b81', '#a5b2d3', '#ac676e', '#adbadd', '#b1bee2', '#d3b8af', '#d8bdb4', '#d9beb5', '#dabfb6', '#dbc0b7', '#ddc2b9', '#dfc9c2', '#e1c6bd', '#e3c8be', '#ffffff'],
           image: 'SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS\x00\x00SSSSSSSSSSSSSSSSSSSSSSSSS@\x00\x00\x00\x00HH\x00\x00\x00SSSSSSSSSSSSSSSSSSSSS\x00\'HHHH###HH\x00\x00SSSSSSSSSSSSSSSSSS\x00I;##########(\x06SSSSSSSSSSSSSSSSS\x00&############ \x00SSSSSSSSSSSSSSS\x00$#######HH#### \x00SSSSSSSSSSSSSSS\x00$###"HHHHHH%## \x00SSSSSSSSSSSSSSS\x00$#####HHHHH%#\x1eF\x00SSSSSSSSSSSSSS\x00####!\x03\x03\x03\x03\x03\x03\x03\x03\x03\x01)H\x00SSSSSSSSSSSSS\x00###\x0f\x03\x02\x08+\x08\x05\x05\x05\x05\x05\x05\x04#\x00SSSSSSSSSSSSS\x00###\x0f\x03\x1a\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x00SSSSSSSSSSSSS\x00##\x15\x1a\x1fN\x1a\x1a\x1a\x1a\x1a\x1a\x1a\x1a\x1a\x13\x03\x00SSSSSSSSSSSSS\x00##\x159KA*1A<<5*22\x13\x03\x00SSSSSSSSSSSSS\x00#\x16OMMMAAAPPA5EA=\x1a\x00SSSSSSSSSSSSS\x00#\x16OMMMMAAPPAAA>J\x1a\x00SSSSSSSSSSSSS\x00#\x16OMMMMMMPPMAQMJ\x1a\x00SSSSSSSSSSSS\x00.\x0b\x19OMMMMMPPPPMMR\x12\x00SSSSSSSSSSSS\x00..\x0b\x0b\x149MMMM<<<<LMR\x12\x00SSSSSSSSSSSS\x00..\x0b\x0b\x149MMMMMA5ALMR\x1d.\x00SSSSSSSSSSS\x00..\x0b\x0b\x149MMMAADCAAQR\x18\x0b.\x00SSSSSSS\x00\x00\x00...\x0b\x0bB8\x1fN5::GG:4\x11\x1b\x0e..\x00SSSSSSS\x00...\x0b.\x0b\x0bBA?\x17AAA55AA\x10\x1b\x0e...\x00SSSSSS\x00...\x0b\x0b\x0b\x0b\x0b,?\x17AMMAAM\x1c76\x0e...\x00SSSSSS\x00..\x0b\x0b\x0b\x0b\x0b\x0b,AA\x1a\x1a\x1a\x1a\x1a\x1a356\x0e..\x0b.\x00SSS\x00\x00...\x0b\x0b\x0b\x0b\x0b\x0b\x0b\rAA555AA5\x07\x0b\x0e.\x0b\x0b.\x0b\x00\x00\x00\x00\x00..\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\nAAAAAA\x0c\x0b\t-\x0b\x0b\x0b\x0b\x0b...\x00\x00\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0bAAAA5\x0b0/\x0b\x0b\x0b\x0b\x0b\x0b...',
         },
-        eyeChars: {
-          open: '•',
-          closed: '-',
-          poked: '0',
-        },
       };
 
       const state = {
@@ -112,11 +101,6 @@
           numRows: 0,
           numColumns: 0,
           frame: 0,
-          nextFrameTime: 0,
-        },
-        eyes: {
-          isOpen: false,
-          lastPokeTime: 0,
           nextFrameTime: 0,
         },
         mouse: {
@@ -128,6 +112,7 @@
           y: 0,
           lastClickTime: 0,
         },
+        isSpellActive: false,
       };
 
       // Decode a pixel image into a 2D array of hex strings
@@ -232,7 +217,12 @@
         // Calculate number of columns and min rows based on window size
         // Subtract 2 so that the horizontal scrollbar doesn't show up
         const minRows = Math.floor(window.innerHeight / config.charHeight);
-        const numColumns = Math.floor(window.innerWidth / config.charWidth) - 2;
+        let numColumns = Math.floor((window.innerWidth-1) / config.charWidth);
+
+        // Enforce a minimum number of columns
+        if (numColumns < 25) {
+          numColumns = 30;
+        }
 
         // Parse the website text and wrap it into lines
         let chars = [
@@ -292,10 +282,6 @@
             el.style.fontWeight = 'bold';
           } else if (name === 'i') {
             el.style.fontStyle = 'italic';
-          } else if (name === 'spell') {
-            el.classList.add('spell');
-          } else if (name === 'eye') {
-            el.classList.add('eye');
           } else if (name === 'pixels') {
             el.classList.add('pixels');
             args.forEach(color => {
@@ -355,11 +341,6 @@
           frozenPositions.add(`${y},${x}`);
           char.y = y;
           char.x = x;
-
-          if (isAfterFinalFrame && char.tags.some(tag => tag.name === 'eye')) {
-            setEyes(config.eyeChars.poked);
-            state.eyes.lastPokeTime = Date.now();
-          }
         }
 
         // Sort so we process characters furthest from their target first
@@ -401,18 +382,17 @@
           }
 
           // Cast a spell
-          const timeSinceLastClick = Date.now() - state.click.lastClickTime;
-          if (timeSinceLastClick < 4000 * (1 - char.weight)) {
+          if (state.isSpellActive && char.weight < 0.8) {
             const mouseVector = {
               x: state.mouse.x / charWidth - char.x,
               y: heightWidthRatio * (state.mouse.y / charHeight - char.y),
             }
             const mouseDistance = Math.hypot(mouseVector.x, mouseVector.y);
-            const w = Math.pow(Math.max(0, 1 - mouseDistance / 40), 0.5);
+            const w = Math.pow(Math.max(0, 1 - mouseDistance / 30), 0.5);
 
-            // Curl clockwise around click position
-            moveVector.x += 100 * w * mouseVector.y / mouseDistance;
-            moveVector.y += -100 * w * mouseVector.x / mouseDistance;
+            // Curl counter-clockwise around click position
+            moveVector.x += -100 * w * mouseVector.y / mouseDistance;
+            moveVector.y += 100 * w * mouseVector.x / mouseDistance;
 
             // Push away from click position
             moveVector.x += -20 * w * mouseVector.x / mouseDistance;
@@ -458,31 +438,6 @@
         span.style.left = `${x * config.charWidth}px`;
       }
 
-      // Make the eyes blink
-      const animateEyes = t => {
-        const {eyes} = state;
-        const {open, closed} = config.eyeChars;
-        if (t > eyes.nextFrameTime + config.intervalMs && Date.now() > eyes.lastPokeTime + 1000) {
-          eyes.isOpen = !eyes.isOpen;
-
-          // Update all eye elements
-          setEyes(eyes.isOpen ? open : closed);
-
-          // Wait a random log-normally distributed length of time
-          // Eyes stay open longer than they stay closed
-          const waitTimeMs = Math.exp(0.7 * sample.gaussian()) * (eyes.isOpen ? 2000 : 150);
-          eyes.nextFrameTime = t + waitTimeMs;
-        }
-        requestAnimationFrame(animateEyes);
-      }
-
-      const setEyes = eyeChar => {
-        const spans = document.querySelectorAll('.eye');
-        spans.forEach(span => {
-          span.textContent = eyeChar;
-        });
-      }
-
       const sample = {
         uniform: (min, max) => min + Math.random() * (max - min),
         uniformInt: (min, max) => Math.floor(sample.uniform(min, max + 1)),
@@ -502,11 +457,9 @@
           state.mouse.y = e.pageY;
         });
 
-        document.addEventListener('click', function(event) {
-          if (event.target.closest('.spell')) {
-            state.click.x = event.clientX;
-            state.click.y = event.clientY;
-            state.click.lastClickTime = Date.now();
+        document.addEventListener('keyup', (e) => {
+          if (e.key.toLowerCase() === 's') {
+            state.isSpellActive = !state.isSpellActive;
           }
         });
 
@@ -521,9 +474,8 @@
         const elements = [...chars.map(createCharElement), createCornerElement()];
         elements.forEach(el => container.appendChild(el));
 
-        // Start animations
+        // Start animation
         requestAnimationFrame(animateGrid);
-        requestAnimationFrame(animateEyes);
       };
 
       startDance();
