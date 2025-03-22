@@ -41,11 +41,6 @@
   <div id="container"></div>
   <script>
     document.fonts.ready.then(() => {
-      const random = {
-        sampleUniform: (min, max) => min + Math.random() * (max - min),
-        sampleUniformInt: (min, max) => Math.floor(random.sampleUniform(min, max + 1)),
-      }
-
       // Remove leading whitespace from each line
       const dedent = (text) => {
         const lines = text.split('\n');
@@ -62,6 +57,7 @@
         charHeight: 15 * 1.35,
         backgroundColor: "#ffebf4",
         maxFrame: 300, // Number of frames to evolve the characters for.
+        maxStartFrame: 150, // Maximum number of frames to wait before starting to move a character.
         intervalMs: 15, // Interval between steps in the animation. Determines how fast the characters move.
         content: dedent(`
 
@@ -216,7 +212,7 @@
         }
 
         // Parse the website text and wrap it into lines
-        let chars = [
+        const unwrappedChars = [
           ...getCharsFromImage(decodeImage(config.pfpImage)),
           ...getCharsFromText(config.content),
         ];
@@ -227,43 +223,45 @@
         const numWrapColumns = Math.ceil(numColumns * (0.6 * sizeWeight + 0.8 * (1 - sizeWeight)));
 
         // Wrap the text into lines and attach final positions
-        const lines = wrapText(chars, numWrapColumns);
+        const lines = wrapText(unwrappedChars, numWrapColumns);
         const numRows = Math.max(minRows, lines.length + 8);
         const startY = Math.max(5, Math.floor((numRows - lines.length) * 0.4));
         const startX = Math.floor((numColumns - numWrapColumns) * 0.5);
 
-        chars = []
+        const chars = [];
         for (let y = 0; y < lines.length; y++) {
           for (let x = 0; x < lines[y].length; x++) {
             const char = lines[y][x];
-            char.weight = random.sampleUniform(0, 1);
-            char.position = {x: random.sampleUniformInt(0, numColumns), y: random.sampleUniformInt(0, numRows)};
-            char.finalPosition = {x: startX + x, y: startY + y};
+            if ((char.char === ' ' || char.char === '\n') && char.tags.length === 0) {
+              continue;
+            }
+            char.x = startX + x;
+            char.y = startY + y;
+            char.velocityX = 0;
+            char.velocityY = 0;
+            char.path = [{x: char.x, y: char.y}];
+            char.startFrame = sample.uniformInt(0, config.maxFrame - config.maxStartFrame);
             chars.push(char);
           }
         }
 
-        // Remove whitespace chars
-        chars = chars.filter(c => (c.char !== ' ' && c.char !== '\n') || c.tags.length > 0);
-
-        // Set state
         state.chars = chars;
         state.numRows = numRows;
         state.numColumns = numColumns;
       }
 
-      const createCharElement = ({position: {x, y}, id, tags, char}) => {
+      const createCharElement = (char) => {
         const {charWidth, charHeight} = config;
         const el = document.createElement('a');
         el.style.position = 'absolute';
-        el.style.top = `${y * charHeight}px`;
-        el.style.left = `${x * charWidth}px`;
+        el.style.top = `${char.y * charHeight}px`;
+        el.style.left = `${char.x * charWidth}px`;
         el.style.minWidth = `${charWidth}px`;
         el.style.minHeight = `${charHeight}px`;
-        el.textContent = char;
-        el.id = `char-${id}`;
+        el.textContent = char.char;
+        el.id = `char-${char.id}`;
 
-        for (const {name, args} of tags) {
+        for (const {name, args} of char.tags) {
           if (name === 'link') {
             el.href = args[0];
           } else if (name === 'b') {
@@ -296,15 +294,19 @@
 
       const animateGrid = (t) => {
         if (t > state.nextFrameTime) {
-          evolveChars();
-          state.chars.forEach(updateCharElementPosition);
+          state.chars.forEach(({id, path}) => {
+            const el = document.getElementById(`char-${id}`);
+            const {x, y} = path[Math.max(path.length - 1 - state.frame, 0)];
+            el.style.top = `${y * config.charHeight}px`;
+            el.style.left = `${x * config.charWidth}px`;
+          });
           state.nextFrameTime = t + config.intervalMs;
           state.frame++;
         }
         requestAnimationFrame(animateGrid);
       }
 
-      const evolveChars = () => {
+      const runSimulation = () => {
         const {frame, chars, numRows, numColumns} = state;
         const {charWidth, charHeight, maxFrame} = config;
         const t = Math.min(frame / maxFrame, 1);
@@ -314,110 +316,115 @@
         // Map to look up chars by their position
         const positionMap = {};
         chars.forEach(char => {
-          const {x, y} = char.position;
-          const key = `${y},${x}`;
+          const key = `${char.y},${char.x}`;
           positionMap[key] = char;
         });
 
         // Indices of positions that have already moved
-        const frozenPositions = new Set();
+        const occupiedPositions = new Set();
 
         const moveChar = (char, {x, y}) => {
-          positionMap[`${char.position.y},${char.position.x}`] = null;
+          positionMap[`${char.y},${char.x}`] = null;
           positionMap[`${y},${x}`] = char;
-          frozenPositions.add(`${y},${x}`);
-          char.position = {x, y};
+          occupiedPositions.add(`${y},${x}`);
+          char.y = y;
+          char.x = x;
+          char.path.push({x, y});
         }
 
-        // Sort so we process characters furthest from their target first
-        // This reduces probability of characters getting stuck and not reaching their final position
-        const sortedChars = [...chars].sort((a, b) => {
-          const distA = Math.abs(a.finalPosition.y - a.position.y) + Math.abs(a.finalPosition.x - a.position.x);
-          const distB = Math.abs(b.finalPosition.y - b.position.y) + Math.abs(b.finalPosition.x - b.position.x);
+        for (let frame = 0; frame < config.maxFrame; frame++) {
+          occupiedPositions.clear();
 
-          // Add a bit of randomness to help not get stuck
-          return distB - distA + random.sampleUniform(-3, 3);
-        });
+          // Sort so we process characters furthest from their target first
+          // This reduces probability of characters getting stuck and not reaching their final position
+          const sortedChars = [...chars].sort((a, b) => {
+            const distA = Math.abs(a.finalY - a.y) + Math.abs(a.finalX - a.x);
+            const distB = Math.abs(b.finalY - b.y) + Math.abs(b.finalX - b.x);
 
-        for (const char of sortedChars) {
-          const {x, y} = char.position;
+            // Add a bit of randomness to help not get stuck
+            return distB - distA + sample.uniform(-3, 3);
+          });
 
-          // If the character is frozen, don't move it
-          if (frozenPositions.has(`${y},${x}`)) {
-            continue;
+          for (const char of sortedChars) {
+            // If the character is frozen, don't move it
+            if (occupiedPositions.has(`${char.y},${char.x}`)) {
+              continue;
+            }
+
+            if (frame < char.startFrame) {
+              occupiedPositions.add(`${char.y},${char.x}`);
+              continue;
+            }
+
+            // How much we want to move the character. We'll adjust this value throughout this function.
+            const moveVector = {x: char.velocityX, y: char.velocityY};
+
+            // Curl clockwise around viewport center
+            const centerVector = {
+              x: (window.scrollX + window.innerWidth / 2) / charWidth - char.x + 0.1 * sample.gaussian(),
+              y: heightWidthRatio * ((window.scrollY + window.innerHeight / 2) / charHeight - char.y + 0.1 * sample.gaussian()),
+            };
+            const centerDistance = Math.hypot(centerVector.x, centerVector.y);
+            if (centerDistance > 0) {
+              const w = Math.max(0, 0.8 - t) / 0.8;
+              moveVector.x += w * centerVector.y / centerDistance;
+              moveVector.y += w * -centerVector.x / centerDistance;
+            }
+
+            // Momentum
+            char.velocityX = 0.95 * char.velocityX + 0.05 * moveVector.x;
+            char.velocityY = 0.99 * char.velocityY + 0.01 * moveVector.y;
+
+            // If the character is not moving, freeze it
+            if (Math.hypot(moveVector.x, moveVector.y) < 0.001) {
+              occupiedPositions.add(`${char.y},${char.x}`);
+              continue;
+            }
+
+            // Move character one step in the direction of the force, adding a bit of randomness
+            const theta = Math.atan2(moveVector.y, moveVector.x) + sample.uniform(-Math.PI / 4, Math.PI / 4);
+            const angleStep = Math.PI / 4;
+            const discretizedTheta = Math.round(theta / angleStep) * angleStep;
+
+            // Calculate direction of movement based on theta
+            const newPosition = {
+              x: (char.x + Math.round(Math.cos(discretizedTheta)) + numColumns) % numColumns,
+              y: (char.y + Math.round(Math.sin(discretizedTheta)) + numRows) % numRows,
+            }
+
+            // If there is a character and it has already moved, don't move this character
+            const key = `${newPosition.y},${newPosition.x}`;
+            if (occupiedPositions.has(key)) {
+              continue;
+            }
+
+            // Check to see if there's already a character in the position we want to move to
+            // Swap positions with target character if it exists
+            const targetChar = positionMap[key];
+            if (targetChar) {
+              moveChar(targetChar, char);
+            }
+            moveChar(char, newPosition);
           }
-
-          // How much we want to move the character. We'll adjust this value throughout this function.
-          const moveVector = {x: 0, y: 0};
-
-          // Pull towards final position
-          const finalVector = {
-            x: char.finalPosition.x - x,
-            y: char.finalPosition.y - y,
-          }
-          const finalDistance = Math.hypot(finalVector.x, finalVector.y);
-          if (finalDistance > 0) {
-            const w = Math.max(0, t - 1 + char.weight);
-            moveVector.x += w * finalVector.x / finalDistance;
-            moveVector.y += w * finalVector.y / finalDistance;
-          }
-
-          // Curl clockwise around viewport center
-          const centerVector = {
-            x: (window.scrollX + window.innerWidth / 2) / charWidth - x + random.sampleUniform(-0.1, 0.1),
-            y: heightWidthRatio * ((window.scrollY + window.innerHeight / 2) / charHeight - y + random.sampleUniform(-0.1, 0.1)),
-          };
-          const centerDistance = Math.hypot(centerVector.x, centerVector.y);
-          if (centerDistance > 0) {
-            const w = Math.max(0, 1 - t);
-            moveVector.x += w * centerVector.y / centerDistance;
-            moveVector.y += w * -centerVector.x / centerDistance;
-          }
-
-          // If the character is not moving, freeze it
-          if (Math.hypot(moveVector.x, moveVector.y) < 0.001) {
-            frozenPositions.add(`${y},${x}`);
-            continue;
-          }
-
-          // Move character one step in the direction of the force, adding a bit of randomness
-          const theta = Math.atan2(moveVector.y, moveVector.x) + random.sampleUniform(-Math.PI / 4, Math.PI / 4);
-          const angleStep = Math.PI / 4;
-          const discretizedTheta = Math.round(theta / angleStep) * angleStep;
-
-          // Calculate direction of movement based on theta
-          const newPosition = {
-            x: (x + Math.round(Math.cos(discretizedTheta)) + numColumns) % numColumns,
-            y: (y + Math.round(Math.sin(discretizedTheta)) + numRows) % numRows,
-          }
-
-          // If there is a character and it has already moved, don't move this character
-          const key = `${newPosition.y},${newPosition.x}`;
-          if (frozenPositions.has(key)) {
-            continue;
-          }
-
-          // Check to see if there's already a character in the position we want to move to
-          // Swap positions with target character if it exists
-          const targetChar = positionMap[key];
-          if (targetChar) {
-            moveChar(targetChar, char.position);
-          }
-          moveChar(char, newPosition);
         }
       };
 
-      const updateCharElementPosition = ({position: {x, y}, id}) => {
-        const span = document.getElementById(`char-${id}`);
-        span.style.top = `${y * config.charHeight}px`;
-        span.style.left = `${x * config.charWidth}px`;
+      const sample = {
+        uniform: (min, max) => min + Math.random() * (max - min),
+        uniformInt: (min, max) => Math.floor(sample.uniform(min, max + 1)),
+        exponential: lambda => -Math.log(Math.random()) / lambda,
+        gaussian: () => {
+          const r = Math.sqrt(sample.exponential(2));
+          const theta = 2 * Math.PI * Math.random();
+          return r * Math.cos(theta);
+        },
       }
 
       const startDance = () => {
         document.body.style.background = config.backgroundColor;
 
-        // Generate characters and update state
         generateChars();
+        runSimulation();
 
         // Create DOM elements
         const container = document.getElementById('container');
