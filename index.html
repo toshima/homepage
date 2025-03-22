@@ -56,7 +56,7 @@
         charWidth: 15 * 0.6,
         charHeight: 15 * 1.35,
         backgroundColor: "#ffebf4",
-        maxFrame: 400, // Number of frames to evolve the characters for.
+        maxFrame: 300, // Number of frames to evolve the characters for.
         intervalMs: 15, // Interval between steps in the animation. Determines how fast the characters move.
         content: dedent(`
 
@@ -77,8 +77,6 @@
           [b]About this website[/b]
 
           The source code for this site can be found [link https://github.com/toshima/homepage]here[/link]. It takes inspiration from the work of generative artists like [link https://ertdfgcvb.xyz/]Andreas Gysin[/link].
-
-          Press S on your keyboard to toggle on/off a [i]mysterious power[/i].
 
           Last updated [i]March 2025[/i].
 
@@ -108,11 +106,8 @@
           y: 0,
         },
         click: {
-          x: 0,
-          y: 0,
           lastClickTime: 0,
         },
-        isSpellActive: false,
       };
 
       // Decode a pixel image into a 2D array of hex strings
@@ -382,13 +377,16 @@
           }
 
           // Cast a spell
-          if (state.isSpellActive && char.weight < 0.8) {
+          const timeSinceClick = Date.now() - state.click.lastClickTime;
+          if (timeSinceClick < 3000 && char.weight < 0.8) {
             const mouseVector = {
               x: state.mouse.x / charWidth - char.x,
               y: heightWidthRatio * (state.mouse.y / charHeight - char.y),
             }
             const mouseDistance = Math.hypot(mouseVector.x, mouseVector.y);
-            const w = Math.pow(Math.max(0, 1 - mouseDistance / 30), 0.5);
+            const w1 = Math.max(0, 1 - mouseDistance / 30);
+            const w2 = 1 - timeSinceClick / 3000;
+            const w = Math.pow(w1 * w2, 0.5);
 
             // Curl counter-clockwise around click position
             moveVector.x += -100 * w * mouseVector.y / mouseDistance;
@@ -457,9 +455,9 @@
           state.mouse.y = e.pageY;
         });
 
-        document.addEventListener('keyup', (e) => {
-          if (e.key.toLowerCase() === 's') {
-            state.isSpellActive = !state.isSpellActive;
+        document.addEventListener('mouseup', (e) => {
+          if (!e.target.href) {
+            state.click.lastClickTime = Date.now();
           }
         });
 
