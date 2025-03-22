@@ -357,7 +357,7 @@
           }
           const finalDistance = Math.hypot(finalVector.x, finalVector.y);
           if (finalDistance > 0) {
-            const w = Math.max(0, t - 1 + char.weight);
+            const w = Math.max(0, t - 0.8 + char.weight);
             moveVector.x += w * finalVector.x / finalDistance;
             moveVector.y += w * finalVector.y / finalDistance;
           }
